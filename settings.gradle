@@ -1,0 +1,5 @@
+rootProject.name = 'family_badget'
+include 'back'
+include 'bot'
+include 'telegram_starter'
+
