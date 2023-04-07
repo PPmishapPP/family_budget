@@ -1,5 +1,4 @@
-rootProject.name = 'family_badget'
+rootProject.name = 'family_budget'
 include 'back'
 include 'bot'
 include 'telegram_starter'
-
