@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 public class MethodMapping {
-
+    
     private final Map<String, MethodAndParams> methodsByName = new HashMap<>();
     private final Object handler;
-
+    
     public MethodMapping(Map<String, Method> methodMap, Object handler) {
         this.handler = handler;
         for (Map.Entry<String, Method> entry : methodMap.entrySet()) {
@@ -22,28 +22,32 @@ public class MethodMapping {
             for (Parameter parameter : entry.getValue().getParameters()) {
                 TelegramParam annotation = parameter.getAnnotation(TelegramParam.class);
                 if (annotation == null) {
-                    throw new IllegalStateException("Все параметры должны быть помечены аннотацией '@TelegramParam'");
+                    if (parameter.getType() != Long.class) {
+                        throw new IllegalStateException(
+                            "Все параметры кроме 'chatId' должны быть помечены аннотацией '@TelegramParam'");
+                    }
+                } else {
+                    paramsNames.add(annotation.value());
                 }
-                paramsNames.add(annotation.value());
             }
             methodsByName.put(entry.getKey(), new MethodAndParams(entry.getValue(), paramsNames));
         }
     }
-
+    
     @SneakyThrows
-    public String execute(String text) {
+    public String execute(String text, Long chatId) {
         int endIndex = text.indexOf(" ");
         String command = endIndex == -1 ? text : text.substring(0, endIndex);
         MethodAndParams methodAndParams = methodsByName.get(command);
-
+        
         if (methodAndParams == null) {
             throw new IllegalArgumentException("Не найдено команды для этой сущности");
         }
-
+        
         if (endIndex == -1) {
-            return (String) methodAndParams.method.invoke(handler);
+            return (String) methodAndParams.method.invoke(handler, chatId);
         }
-
+        
         String arguments = text.substring(endIndex + 2);
         Map<String, String> params = new HashMap<>();
         for (String param : arguments.split("-")) {
@@ -53,15 +57,15 @@ public class MethodMapping {
             }
             params.put(param.substring(0, paramNameEnd), param.substring(paramNameEnd));
         }
-
-
+        
+        
         List<String> paramsNames = methodAndParams.paramsNames;
-
+        
         if (paramsNames.size() != params.size()) {
             throw new IllegalArgumentException("Не правильное количество параметров. Должно быть " + paramsNames.size());
         }
-        Object[] objects = new Object[paramsNames.size()];
-
+        Object[] objects = new Object[paramsNames.size() + 1];
+        
         for (int i = 0; i < paramsNames.size(); i++) {
             String paramValue = params.get(paramsNames.get(i));
             if (paramValue == null) {
@@ -69,10 +73,11 @@ public class MethodMapping {
             }
             objects[i] = paramValue;
         }
-
+        objects[paramsNames.size()] = chatId;
+        
         return (String) methodAndParams.method.invoke(handler, objects);
     }
-
+    
     record MethodAndParams(Method method, List<String> paramsNames) {
     }
 }

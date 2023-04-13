@@ -7,7 +7,7 @@ import org.springframework.kafka.support.SendResult;
 import ru.mishapp.annotations.TelegramCommand;
 import ru.mishapp.annotations.TelegramHandler;
 import ru.mishapp.annotations.TelegramParam;
-import ru.mishapp.dto.AccountReadDTO;
+import ru.mishapp.dto.KafkaMessage;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -17,25 +17,25 @@ import java.util.concurrent.CompletableFuture;
 @SuppressWarnings("unused")
 public class AccountHandler {
     
-    private final KafkaTemplate<Long, Object> kafkaTemplate;
+    private final KafkaTemplate<Long, KafkaMessage> kafkaTemplate;
     
     @TelegramCommand()
-    public String readAll() {
+    public String readAll(Long chatId) {
         return "У вас очень-очень много денег!";
     }
     
     
     @TelegramCommand("read")
-    public void readByName(@TelegramParam("name") String name) {
-        AccountReadDTO accountReadDTO = new AccountReadDTO(name);
-        CompletableFuture<SendResult<Long, Object>> future = kafkaTemplate.send("accountRequestTopic", accountReadDTO);
+    public void readByName(@TelegramParam("name") String name, Long chatId) {
+        KafkaMessage kafkaMessage = new KafkaMessage(chatId, name);
+        CompletableFuture<SendResult<Long, KafkaMessage>> future = kafkaTemplate.send("accountRequestTopic", kafkaMessage);
         future.whenComplete((result, ex) -> {
             if (ex == null) {
-                log.info("Sent message=[" + accountReadDTO +
+                log.info("Sent message=[" + name +
                     "] with offset=[" + result.getRecordMetadata().offset() + "]");
             } else {
                 log.info("Unable to send message=[" +
-                    accountReadDTO + "] due to : " + ex.getMessage());
+                    name + "] due to : " + ex.getMessage());
             }
         });
     }

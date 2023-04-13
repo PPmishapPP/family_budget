@@ -7,10 +7,10 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 public class HandlerMapping {
-
+    
     private final Map<String, MethodMapping> methodMappingMap;
-
-    public Optional<String> execute(String text) {
+    
+    public Optional<String> execute(String text, Long chatId) {
         text = text.trim();
         if (text.startsWith("/")) {
             int end = text.indexOf(" ");
@@ -24,8 +24,8 @@ public class HandlerMapping {
                 command = text.substring(entity.length() + 2);
             }
             return Optional
-                    .ofNullable(methodMappingMap.get(entity))
-                    .map(m -> m.execute(command));
+                .ofNullable(methodMappingMap.get(entity))
+                .map(m -> m.execute(command, chatId));
         }
         return Optional.empty();
     }
