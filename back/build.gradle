@@ -4,10 +4,11 @@ plugins {
 
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter'
-    implementation 'org.springframework.kafka:spring-kafka'
-    implementation 'org.springframework.data:spring-data-jdbc'
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation project(':kafka_config_starter')
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.flywaydb:flyway-core'
     compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'org.postgresql:postgresql'
     annotationProcessor 'org.projectlombok:lombok'
 }

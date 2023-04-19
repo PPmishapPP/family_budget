@@ -17,12 +17,10 @@ public class AccountListener {
     
     private final Bot bot;
     
-    @KafkaListener(topics = "accountRequestTopic", groupId = "botConsumeGroup")
+    @KafkaListener(topics = "#{@KafkaTopicConfig.ACCOUNT_RESPONSE_TOPIC}", groupId = "botConsumeGroup")
     @SneakyThrows
-    public void listenAccount(ConsumerRecord<String, KafkaMessage> rec) {
-        KafkaMessage request = rec.value();
-        KafkaMessage response = new KafkaMessage(request.chatId(), "На счету " + request.value() + " очень много денег (кафка работает)");
-        log.info(response.toString());
+    public void listenAccount(ConsumerRecord<Long, KafkaMessage> rec) {
+        KafkaMessage response = rec.value();
         bot.execute(new SendMessage(response.chatId().toString(), response.value()));
     }
 }

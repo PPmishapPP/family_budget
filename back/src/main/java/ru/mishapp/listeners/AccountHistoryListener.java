@@ -16,18 +16,18 @@ import ru.mishapp.services.AccountService;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class AccountListener {
+public class AccountHistoryListener {
     
     private final KafkaTemplate<Long, KafkaMessage> kafkaTemplate;
     private final AccountService accountService;
     
-    @KafkaListener(topics = "#{@KafkaTopicConfig.ACCOUNT_READ_TOPIC}", groupId = "backConsumeGroup")
+    @KafkaListener(topics = "#{@KafkaTopicConfig.ACCOUNT_HISTORY_READ_TOPIC}", groupId = "backConsumeGroup")
     @SneakyThrows
     public void listenReadAccount(ConsumerRecord<Long, KafkaMessage> rec) {
         KafkaMessage request = rec.value();
         String message;
         if (StringUtils.hasText(request.value())) {
-            message = accountService.readByName(request.value()).toTelegram();
+            message = "На счету " + request.value() + " очень много денег (кафка работает)";
         } else {
             StringBuilder stringBuilder = new StringBuilder();
             for (Account account : accountService.readAll()) {
@@ -40,15 +40,4 @@ public class AccountListener {
         log.info(response.toString());
         kafkaTemplate.send(KafkaTopicConfig.ACCOUNT_RESPONSE_TOPIC, response);
     }
-    
-    @KafkaListener(topics = "#{@KafkaTopicConfig.ACCOUNT_CREATE_TOPIC}", groupId = "backConsumeGroup")
-    @SneakyThrows
-    public void listenCreateAccount(ConsumerRecord<Long, KafkaMessage> rec) {
-        KafkaMessage request = rec.value();
-        Account account = accountService.create(request.value(), request.chatId());
-        KafkaMessage response = new KafkaMessage(request.chatId(), "Создан аккаунт - " + account.toTelegram());
-        log.info(response.toString());
-        kafkaTemplate.send(KafkaTopicConfig.ACCOUNT_RESPONSE_TOPIC, response);
-    }
-    
 }

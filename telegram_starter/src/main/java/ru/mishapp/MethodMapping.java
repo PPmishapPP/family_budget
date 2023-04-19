@@ -71,7 +71,7 @@ public class MethodMapping {
             if (paramValue == null) {
                 throw new IllegalArgumentException("Не передан параметр - " + paramsNames.get(i));
             }
-            objects[i] = paramValue;
+            objects[i] = paramValue.trim();
         }
         objects[paramsNames.size()] = chatId;
         
