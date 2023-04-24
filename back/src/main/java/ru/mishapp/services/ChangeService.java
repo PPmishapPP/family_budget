@@ -19,8 +19,8 @@ public class ChangeService {
     private final AccountHistoryRepository accountHistoryRepository;
     
     
-    public int changeBalance(Change change) {
-        Optional<Account> byName = accountRepository.findByName(change.name());
+    public int changeBalance(Change change, long chatId) {
+        Optional<Account> byName = accountRepository.findByNameAndChatId(change.name(), chatId);
         if (byName.isPresent()) {
             AccountHistory lastAccountHistory = accountHistoryRepository.findLast(byName.get().getId());
             AccountHistory newAccountHistory = lastAccountHistory.applyChange(change);

@@ -23,9 +23,11 @@ public class HandlerMapping {
                 entity = text.substring(1, end);
                 command = text.substring(entity.length() + 2);
             }
-            return Optional
-                .ofNullable(methodMappingMap.get(entity))
-                .map(m -> m.execute(command, chatId));
+            MethodMapping methodMapping = methodMappingMap.get(entity);
+            if (methodMapping == null) {
+                throw new IllegalArgumentException("Нет такого обработчика:" + entity);
+            }
+            return Optional.ofNullable(methodMapping.execute(command, chatId));
         }
         return Optional.empty();
     }

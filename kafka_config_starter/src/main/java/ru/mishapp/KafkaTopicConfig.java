@@ -20,6 +20,8 @@ public class KafkaTopicConfig {
     public static final String CHANGE_TOPIC = "changeTopic";
     
     public static final String ACCOUNT_HISTORY_READ_TOPIC = "accountHistoryTopic";
+    public static final String PERIODIC_CHANGE_CREATE_TOPIC = "periodicChangeCreateTopic";
+    public static final String PERIODIC_CHANGE_RULE_CREATE_TOPIC = "periodicChangeRuleCreateTopic";
     
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
@@ -55,5 +57,15 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic historyTopic() {
         return new NewTopic(ACCOUNT_HISTORY_READ_TOPIC, 1, (short) 1);
+    }
+    
+    @Bean
+    public NewTopic periodicChangeCreateTopic() {
+        return new NewTopic(PERIODIC_CHANGE_CREATE_TOPIC, 1, (short) 1);
+    }
+    
+    @Bean
+    public NewTopic periodicChangeRuleCreateTopic() {
+        return new NewTopic(PERIODIC_CHANGE_RULE_CREATE_TOPIC, 1, (short) 1);
     }
 }

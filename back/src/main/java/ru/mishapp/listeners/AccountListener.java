@@ -27,7 +27,7 @@ public class AccountListener {
         KafkaMessage request = rec.value();
         String message;
         if (StringUtils.hasText(request.value())) {
-            message = accountService.readByName(request.value()).toTelegram();
+            message = accountService.readByName(request.value(), request.chatId()).toTelegram();
         } else {
             StringBuilder stringBuilder = new StringBuilder();
             for (Account account : accountService.readAll()) {

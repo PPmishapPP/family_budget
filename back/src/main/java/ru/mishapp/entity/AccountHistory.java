@@ -10,7 +10,7 @@ import ru.mishapp.dto.Change;
 
 import java.time.LocalDateTime;
 
-import static ru.mishapp.Constants.FORMATTER;
+import static ru.mishapp.config.Constans.DAY_AND_TIME;
 
 @Table("account_history")
 @Getter
@@ -43,6 +43,6 @@ public class AccountHistory {
     }
     
     public String toTelegram() {
-        return String.format("%s - %s: %d, Баланс: %d%n", dateTime.format(FORMATTER), comment, Math.abs(sum), balance);
+        return String.format("%s - %s: %d, Баланс: %d%n", dateTime.format(DAY_AND_TIME), comment, Math.abs(sum), balance);
     }
 }

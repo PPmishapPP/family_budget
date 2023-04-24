@@ -23,8 +23,8 @@ public class AccountService {
         return accountRepository.findAll();
     }
     
-    public Account readByName(String name) {
-        Optional<Account> byName = accountRepository.findByName(name);
+    public Account readByName(String name, long chatId) {
+        Optional<Account> byName = accountRepository.findByNameAndChatId(name, chatId);
         if (byName.isEmpty()) {
             throw new IllegalArgumentException("Нет аккаунта с таким именем");
         }
@@ -35,8 +35,9 @@ public class AccountService {
     public Account create(String name, long chatId) {
         Account account = new Account(name, true, chatId);
         Account save = accountRepository.save(account);
-        accountHistoryRepository.save(
+        AccountHistory init = accountHistoryRepository.save(
             new AccountHistory(save.getId(), 0, 0, LocalDateTime.now(), "Инициализация"));
+        save.getHistory().add(init);
         return save;
     }
 }
