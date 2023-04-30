@@ -48,6 +48,7 @@ public class PeriodicChangeRuleService {
             throw new IllegalArgumentException("Не существует типа правила " + rule.type());
         }
         builder.type(type.get());
+        builder.name(rule.name());
         builder.sum(rule.sum());
         builder.pass(rule.pass());
         builder.nextDay(rule.startDay());

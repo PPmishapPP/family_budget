@@ -21,10 +21,11 @@ create table periodic_change_rule
     periodic_change_id   bigint      not null references periodic_change (id),
     target_account_id    bigint      not null references account (id),
     receiving_account_id bigint references account (id),
+    name                 varchar     not null,
     sum                  int         not null,
     type                 varchar(10) not null,
     pass                 int default 0,
-    next_day            date        not null
+    next_day             date        not null
 );
 
 create table account_history

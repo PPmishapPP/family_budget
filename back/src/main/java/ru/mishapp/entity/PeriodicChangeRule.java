@@ -3,16 +3,19 @@ package ru.mishapp.entity;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.With;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 @Table("periodic_change_rule")
 @Getter
 @Builder
+@With
 public class PeriodicChangeRule {
     
     @Id
@@ -20,6 +23,7 @@ public class PeriodicChangeRule {
     private final long periodicChangeId;
     private final long targetAccountId;
     private final Long receivingAccountId;
+    private final String name;
     private final int sum;
     private final Type type;
     private final int pass;
@@ -31,7 +35,7 @@ public class PeriodicChangeRule {
         long periodicChangeId,
         long targetAccountId,
         Long receivingAccountId,
-        int sum,
+        String name, int sum,
         Type type,
         int pass,
         LocalDate nextDay
@@ -40,6 +44,7 @@ public class PeriodicChangeRule {
         this.periodicChangeId = periodicChangeId;
         this.targetAccountId = targetAccountId;
         this.receivingAccountId = receivingAccountId;
+        this.name = name;
         this.sum = sum;
         this.type = type;
         this.pass = pass;
@@ -47,30 +52,35 @@ public class PeriodicChangeRule {
     }
     
     public String toTelegram() {
-        return String.valueOf(sum);
+        return String.format("%s(%d₽, %s)", name, sum, type.description);
     }
     
+    
     public enum Type {
+        MONTHLY("Ежемесячно", LocalDate::plusMonths),
+        WEEKLY("Еженедельно", LocalDate::plusWeeks),
+        DAILY("Ежедневно", LocalDate::plusDays);
         
-        ONE_TIME("Один раз"),
-        MONTHLY("Ежемесячно"),
-        WEEKLY("Еженедельно"),
-        DAILY("Ежедневно");
-        
-        private final String type;
+        private final String description;
+        private final BiFunction<LocalDate, Integer, LocalDate> next;
         
         
-        Type(String type) {
-            this.type = type;
+        Type(String description, BiFunction<LocalDate, Integer, LocalDate> next) {
+            this.description = description;
+            this.next = next;
         }
         
         public static Optional<Type> of(String type) {
             for (Type value : values()) {
-                if (value.type.equals(type)) {
+                if (value.description.equals(type)) {
                     return Optional.of(value);
                 }
             }
             return Optional.empty();
+        }
+        
+        public LocalDate next(LocalDate day, int pass) {
+            return next.apply(day, pass + 1);
         }
     }
 }

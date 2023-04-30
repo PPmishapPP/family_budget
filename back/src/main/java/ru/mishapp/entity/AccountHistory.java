@@ -2,6 +2,7 @@ package ru.mishapp.entity;
 
 
 import jakarta.annotation.Nonnull;
+import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
@@ -14,6 +15,7 @@ import static ru.mishapp.config.Constans.DAY_AND_TIME;
 
 @Table("account_history")
 @Getter
+@Builder(toBuilder = true)
 public class AccountHistory {
     @Id
     private final Long id;
