@@ -23,7 +23,7 @@ public class PeriodicChangeRule {
     private final int sum;
     private final Type type;
     private final int pass;
-    private final LocalDate startDay;
+    private final LocalDate nextDay;
     
     @PersistenceCreator
     public PeriodicChangeRule(
@@ -34,7 +34,7 @@ public class PeriodicChangeRule {
         int sum,
         Type type,
         int pass,
-        LocalDate startDay
+        LocalDate nextDay
     ) {
         this.id = id;
         this.periodicChangeId = periodicChangeId;
@@ -43,7 +43,7 @@ public class PeriodicChangeRule {
         this.sum = sum;
         this.type = type;
         this.pass = pass;
-        this.startDay = startDay;
+        this.nextDay = nextDay;
     }
     
     public String toTelegram() {

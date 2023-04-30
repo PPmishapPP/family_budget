@@ -24,14 +24,14 @@ create table periodic_change_rule
     sum                  int         not null,
     type                 varchar(10) not null,
     pass                 int default 0,
-    start_day            date        not null
+    next_day            date        not null
 );
 
 create table account_history
 (
     id                 bigserial not null primary key,
     account_id         bigint    not null references account (id),
-    periodic_change_id bigint references periodic_change (id),
+    periodic_change_id bigint references periodic_change_rule (id),
     sum                int       not null,
     balance            int       not null,
     date_time          timestamp not null,

@@ -50,7 +50,7 @@ public class PeriodicChangeRuleService {
         builder.type(type.get());
         builder.sum(rule.sum());
         builder.pass(rule.pass());
-        builder.startDay(rule.startDay());
+        builder.nextDay(rule.startDay());
         
         
         return periodicChangeRuleRepository.save(builder.build());
