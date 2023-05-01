@@ -50,12 +50,12 @@ public class MethodMapping {
         
         String arguments = text.substring(endIndex + 2);
         Map<String, String> params = new HashMap<>();
-        for (String param : arguments.split("-")) {
+        for (String param : arguments.split(" -")) {
             int paramNameEnd = param.indexOf(" ");
             if (paramNameEnd == -1) {
                 throw new IllegalArgumentException("Нет значения параметра " + param);
             }
-            params.put(param.substring(0, paramNameEnd), param.substring(paramNameEnd));
+            params.put(param.substring(0, paramNameEnd), param.substring(paramNameEnd).replace("\"", ""));
         }
         
         

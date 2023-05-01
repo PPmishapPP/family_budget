@@ -13,13 +13,13 @@ import ru.mishapp.dto.KafkaMessage;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class AccountListener {
+public class ResponseListener {
     
     private final Bot bot;
     
     @KafkaListener(topics = "#{@KafkaTopicConfig.ACCOUNT_RESPONSE_TOPIC}", groupId = "botConsumeGroup")
     @SneakyThrows
-    public void listenAccount(ConsumerRecord<Long, KafkaMessage> rec) {
+    public void listen(ConsumerRecord<Long, KafkaMessage> rec) {
         KafkaMessage response = rec.value();
         bot.execute(new SendMessage(response.chatId().toString(), response.value()));
     }

@@ -28,7 +28,7 @@ public class ChangeHandler {
         Long chatId
     ) {
         String value = objectMapper.writeValueAsString(
-            new Change(accountName, Integer.parseInt(sum), comment)
+            new Change(accountName, Integer.parseInt(sum.replace(" ", "")), comment)
         );
         kafkaSendService.send(new KafkaMessage(chatId, value), KafkaTopicConfig.CHANGE_TOPIC);
     }

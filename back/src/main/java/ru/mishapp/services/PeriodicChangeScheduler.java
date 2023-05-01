@@ -54,7 +54,7 @@ public class PeriodicChangeScheduler {
                 ApplyResult applyResult = accountService.applyRule(rule, nextDay);
                 nextDay = rule.getType().next(nextDay, rule.getPass());
                 String message = String.format(
-                    "Применено правило - %s%nТекущий баланс на счету %s - %d",
+                    "Применено правило - %s%nТекущий баланс на счету %s: %d",
                     rule.toTelegram(), accounts.get(rule.getTargetAccountId()), applyResult.TargetAccountBalance()
                 );
                 messages.computeIfAbsent(chatId, id -> new ArrayList<>()).add(message);

@@ -28,7 +28,7 @@ public class ChangeListener {
         KafkaMessage request = rec.value();
         Change change = objectMapper.readValue(request.value(), Change.class);
         int balance = changeService.changeBalance(change, request.chatId());
-        String message = String.format("Баланс у счёта %s изменён. Текущий баланс - %d₽", change.name(), balance);
+        String message = String.format("Баланс у счёта %s изменён. Текущий баланс: %d₽", change.name(), balance);
         KafkaMessage response = new KafkaMessage(request.chatId(), message);
         log.info(response.toString());
         kafkaTemplate.send(KafkaTopicConfig.ACCOUNT_RESPONSE_TOPIC, response);
