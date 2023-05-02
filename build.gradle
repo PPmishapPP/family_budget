@@ -1,19 +1,25 @@
 plugins {
-    id 'java'
+    id "io.spring.dependency-management" version "1.0.11.RELEASE"
 }
 
-group 'ru.mishapp'
+
 version '1.0-SNAPSHOT'
 
-repositories {
-    mavenCentral()
-}
+allprojects {
+    group 'ru.mishapp'
 
-dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-}
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
 
-test {
-    useJUnitPlatform()
+    apply plugin: "io.spring.dependency-management"
+    dependencyManagement {
+        dependencies {
+            imports {
+                mavenBom "org.springframework.boot:spring-boot-dependencies:3.0.4"
+            }
+        }
+    }
+
 }
