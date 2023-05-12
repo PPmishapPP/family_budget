@@ -25,7 +25,7 @@ public class Config {
 
     @Bean
     @SneakyThrows
-    public Bot bot(TelegramBotConfigurationProperty property, HandlerMapping handlerMapping) {
+    public IBot bot(TelegramBotConfigurationProperty property, HandlerMapping handlerMapping) {
         Bot bot = new Bot(property.getToken(), property.getName(), handlerMapping);
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
         telegramBotsApi.registerBot(bot);

@@ -1,7 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/family_budget
+    username: usr
+    password: pwd
+  flyway:
+    enabled: true
+
 telegram:
   bot:
     name: FamilyBadgetPP_bot
     token: 6287259982:AAEAol0Pp9avlmmY5Pji96pTdHh7yfgTF98
-spring:
-  kafka:
-    bootstrap-servers: localhost:9092
+
+logging:
+  level:
+    org.springframework.jdbc.core.JdbcTemplate: TRACE
+
+schedule:
+  periodic-rule: "0 * * * * *"
+  todo-reminder: "0 0 8 * * *"

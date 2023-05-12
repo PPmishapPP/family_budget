@@ -1,14 +1,13 @@
 package ru.mishapp;
 
-import lombok.SneakyThrows;
-import ru.mishapp.annotations.TelegramParam;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.SneakyThrows;
+import ru.mishapp.annotations.TelegramParam;
 
 public class MethodMapping {
     
