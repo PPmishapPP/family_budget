@@ -1,5 +1,6 @@
 package ru.mishapp.services;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.mishapp.entity.PeriodicChange;
@@ -14,5 +15,9 @@ public class PeriodicChangeService {
     public PeriodicChange create(String name, long chatId) {
         PeriodicChange periodicChange = new PeriodicChange(name, chatId);
         return periodicChangeRepository.save(periodicChange);
+    }
+    
+    public List<PeriodicChange> readAll(long chatId) {
+        return periodicChangeRepository.findAllByChatId(chatId);
     }
 }

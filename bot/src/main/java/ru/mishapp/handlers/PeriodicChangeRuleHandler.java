@@ -11,21 +11,21 @@ import ru.mishapp.dto.PeriodicChangeRuleDTO;
 import ru.mishapp.entity.PeriodicChangeRule;
 import ru.mishapp.services.PeriodicChangeRuleService;
 
-@TelegramHandler("rule")
+@TelegramHandler(value = "правила", description = "Добавить правило автоматического изменения счетов")
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class PeriodicChangeRuleHandler {
     
     private final PeriodicChangeRuleService periodicChangeRuleService;
     
-    @TelegramCommand("create_e")
-    public String create(@TelegramParam("name") String name,
-                         @TelegramParam("pcName") String pcName,
-                         @TelegramParam("taName") String taName,
-                         @TelegramParam("sum") String sum,
-                         @TelegramParam("type") String type,
-                         @TelegramParam("pass") String pass,
-                         @TelegramParam("startDay") String startDay,
+    @TelegramCommand("создать")
+    public String create(@TelegramParam("правило") String name,
+                         @TelegramParam("изменение") String pcName,
+                         @TelegramParam("счёт") String taName,
+                         @TelegramParam("сумма") String sum,
+                         @TelegramParam("тип") String type,
+                         @TelegramParam("пропусков") String pass,
+                         @TelegramParam("начало") String startDay,
                          Long chatId
     ) {
         try {

@@ -16,5 +16,5 @@ logging:
     org.springframework.jdbc.core.JdbcTemplate: TRACE
 
 schedule:
-  periodic-rule: "0 * * * * *"
+  periodic-rule: "0 */5 * * * *"
   todo-reminder: "0 0 8 * * *"

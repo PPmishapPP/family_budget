@@ -10,7 +10,7 @@ import ru.mishapp.dto.AccountBalance;
 import ru.mishapp.entity.Account;
 import ru.mishapp.services.AccountService;
 
-@TelegramHandler("account")
+@TelegramHandler("счета")
 @RequiredArgsConstructor
 @Slf4j
 @SuppressWarnings("unused")
@@ -21,19 +21,20 @@ public class AccountHandler {
     @TelegramCommand()
     public String readAll(Long chatId) {
         return accountService.readAllByChatId(chatId)
-            .stream().map(AccountBalance::toTelegram)
+            .stream()
+            .map(AccountBalance::toTelegram)
             .collect(Collectors.joining("\n"));
     }
     
     
-    @TelegramCommand("read")
-    public String readByName(@TelegramParam("name") String name, Long chatId) {
+    @TelegramCommand("показать")
+    public String readByName(@TelegramParam("счёт") String name, Long chatId) {
         return accountService.readByName(name, chatId).toTelegram();
     }
     
-    @TelegramCommand("create")
-    public String create(@TelegramParam("name") String name, Long chatId) {
+    @TelegramCommand("создать")
+    public String create(@TelegramParam("счёт") String name, Long chatId) {
         Account account = accountService.create(name, chatId);
-        return "Создан аккаунт: " + account.toTelegram();
+        return "Создан счёт: " + account.toTelegram();
     }
 }

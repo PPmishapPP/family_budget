@@ -8,7 +8,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class HandlerMapping {
     
-    private final Map<String, MethodMapping> methodMappingMap;
+    private final Map<String, IMethodMapping> methodMappingMap;
     
     public Optional<String> execute(String text, Long chatId) {
         text = text.trim();
@@ -23,7 +23,7 @@ public class HandlerMapping {
                 entity = text.substring(1, end);
                 command = text.substring(entity.length() + 2);
             }
-            MethodMapping methodMapping = methodMappingMap.get(entity);
+            IMethodMapping methodMapping = methodMappingMap.get(entity);
             if (methodMapping == null) {
                 throw new IllegalArgumentException("Нет такого обработчика:" + entity);
             }

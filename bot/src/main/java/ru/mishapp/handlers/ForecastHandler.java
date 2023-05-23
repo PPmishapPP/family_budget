@@ -11,7 +11,7 @@ import ru.mishapp.services.ForecastService;
 import ru.mishapp.services.records.ForecastResult;
 
 @Service
-@TelegramHandler("прогноз")
+@TelegramHandler(value = "прогноз", description = "Узнать прогноз на какую-то дату")
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class ForecastHandler {

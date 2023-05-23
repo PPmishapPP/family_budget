@@ -8,19 +8,19 @@ import ru.mishapp.annotations.TelegramParam;
 import ru.mishapp.dto.Change;
 import ru.mishapp.services.ChangeService;
 
-@TelegramHandler("change")
+@TelegramHandler(value = "вручную", description = "Внести какое-то изменение в счета")
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class ChangeHandler {
     
     private final ChangeService changeService;
     
-    @TelegramCommand("add")
+    @TelegramCommand("пополнить")
     @SneakyThrows
     public String add(
-        @TelegramParam("name") String accountName,
-        @TelegramParam("sum") String sum,
-        @TelegramParam("comment") String comment,
+        @TelegramParam("счёт") String accountName,
+        @TelegramParam("сумма") String sum,
+        @TelegramParam("комментарий") String comment,
         Long chatId
     ) {
         Change change = new Change(accountName, Integer.parseInt(sum), comment);
@@ -28,12 +28,12 @@ public class ChangeHandler {
         return String.format("Баланс у счёта %s изменён. Текущий баланс: %d₽", change.name(), balance);
     }
     
-    @TelegramCommand("delete")
+    @TelegramCommand("снять")
     @SneakyThrows
     public String delete(
-        @TelegramParam("name") String accountName,
-        @TelegramParam("sum") String sum,
-        @TelegramParam("comment") String comment,
+        @TelegramParam("счёт") String accountName,
+        @TelegramParam("сумма") String sum,
+        @TelegramParam("комментарий") String comment,
         Long chatId
     ) {
         Change change = new Change(accountName, -1 * Integer.parseInt(sum), comment);

@@ -34,6 +34,12 @@ public class PeriodicChange {
     }
     
     public String toTelegram() {
-        return name;
+        StringBuilder builder = new StringBuilder(name + "\n");
+        for (PeriodicChangeRule rule : rules) {
+            builder.append("    ");
+            builder.append(rule.toTelegram());
+            builder.append("\n");
+        }
+        return builder.toString();
     }
 }

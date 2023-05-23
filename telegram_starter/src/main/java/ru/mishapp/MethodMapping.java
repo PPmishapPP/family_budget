@@ -7,9 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import ru.mishapp.annotations.TelegramParam;
 
-public class MethodMapping {
+public class MethodMapping implements IMethodMapping{
     
     private final Map<String, MethodAndParams> methodsByName = new HashMap<>();
     private final Object handler;
@@ -75,6 +77,34 @@ public class MethodMapping {
         objects[paramsNames.size()] = chatId;
         
         return (String) methodAndParams.method.invoke(handler, objects);
+    }
+    
+    @Override
+    public String toTelegram() {
+        StringBuilder builder = new StringBuilder();
+        for (Map.Entry<String, MethodAndParams> entry : methodsByName.entrySet()) {
+            if (StringUtils.hasText(entry.getKey())){
+                builder.append(entry.getKey());
+                
+            } else {
+                builder.append("По умолчанию");
+            }
+            
+            List<String> paramsNames = entry.getValue().paramsNames;
+            if (!CollectionUtils.isEmpty(paramsNames)) {
+                builder.append("(");
+                for (int i = 0; i < paramsNames.size(); i++) {
+                    String paramsName = paramsNames.get(i);
+                    builder.append(paramsName);
+                    if (i < paramsNames.size() - 1) {
+                        builder.append(", ");
+                    }
+                }
+                builder.append(")");
+            }
+            builder.append("\n");
+        }
+        return builder.toString();
     }
     
     record MethodAndParams(Method method, List<String> paramsNames) {

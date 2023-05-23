@@ -35,23 +35,28 @@ public class Config {
     @Bean
     public HandlerMapping handlerMapping(ApplicationContext context) {
         Map<String, Object> beansWithAnnotation = context.getBeansWithAnnotation(TelegramHandler.class);
-        Map<String, MethodMapping> methodMappingMap = new HashMap<>();
+        Map<String, IMethodMapping> methodMappingMap = new HashMap<>();
+        Map<String, String> descriptions = new HashMap<>();
 
         for (Map.Entry<String, Object> entry : beansWithAnnotation.entrySet()) {
             Class<?> handlerClass = entry.getValue().getClass();
             Map<String, Method> map = new HashMap<>();
+            
             for (Method method : handlerClass.getMethods()) {
                 TelegramCommand commandAnnotation = method.getAnnotation(TelegramCommand.class);
                 if (commandAnnotation != null) {
-                    String command = commandAnnotation.value();
-                    map.put(command, method);
+                    map.put(commandAnnotation.value(), method);
                 }
             }
             if (!map.isEmpty()) {
                 MethodMapping methodMapping = new MethodMapping(map, entry.getValue());
                 methodMappingMap.put(entry.getKey(), methodMapping);
+                descriptions.put(entry.getKey(), entry.getValue().getClass().getAnnotation(TelegramHandler.class).description());
             }
         }
+        
+        methodMappingMap.put("помощь", new Help(new HashMap<>(methodMappingMap), descriptions));
+        
         return new HandlerMapping(methodMappingMap);
     }
 
