@@ -22,5 +22,5 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
         left join account_history ah on account.id = ah.account_id
         and ah.date_time = (select max(date_time) from account_history as ah2 where ah2.account_id = account.id)
         where account.chat_id = :chatId""")
-    List<AccountBalance> findAllNamesByChatId(@Param("chatId") long chatId);
+    List<AccountBalance> findAllAccountBalanceByChatId(@Param("chatId") long chatId);
 }

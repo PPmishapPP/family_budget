@@ -26,7 +26,7 @@ public class AccountService {
     
     
     public List<AccountBalance> readAllByChatId(Long chatId) {
-        return accountRepository.findAllNamesByChatId(chatId);
+        return accountRepository.findAllAccountBalanceByChatId(chatId);
     }
     
     public Account readByName(String name, long chatId) {

@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.relational.core.mapping.Table;
+import ru.mishapp.Constants;
 import ru.mishapp.dto.Change;
 import static ru.mishapp.Constants.DAY_AND_TIME;
 
@@ -44,6 +45,6 @@ public class AccountHistory {
     }
     
     public String toTelegram() {
-        return String.format("%s - %s: %d, Баланс: %d%n", dateTime.format(DAY_AND_TIME), comment, Math.abs(sum), balance);
+        return String.format("%s - %s: %s, Баланс: %s%n", dateTime.format(DAY_AND_TIME), comment, Constants.RUB.format(Math.abs(sum)), Constants.RUB.format(balance));
     }
 }

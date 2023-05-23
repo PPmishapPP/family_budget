@@ -8,12 +8,18 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.mishapp.dto.AccountBalance;
+import ru.mishapp.dto.ListDto;
+import ru.mishapp.entity.Account;
+import ru.mishapp.entity.AccountHistory;
 import ru.mishapp.entity.PeriodicChange;
 import ru.mishapp.entity.PeriodicChangeRule;
+import ru.mishapp.repository.AccountHistoryRepository;
 import ru.mishapp.repository.AccountRepository;
 import ru.mishapp.repository.PeriodicChangeRepository;
 import ru.mishapp.services.records.ForecastItem;
 import ru.mishapp.services.records.ForecastResult;
+import static ru.mishapp.Constants.DAY;
+import static ru.mishapp.Constants.RUB;
 
 @Service
 @RequiredArgsConstructor
@@ -21,9 +27,11 @@ public class ForecastService {
     
     private final PeriodicChangeRepository repository;
     private final AccountRepository accountRepository;
+    private final AccountHistoryRepository accountHistoryRepository;
+    
     public ForecastResult forecastFor(LocalDate day, Long chatId) {
         List<PeriodicChange> changes = repository.findAllByChatId(chatId);
-        List<AccountBalance> accounts = accountRepository.findAllNamesByChatId(chatId);
+        List<AccountBalance> accounts = accountRepository.findAllAccountBalanceByChatId(chatId);
         Map<Long, Integer> accountBalance = accounts.stream()
             .collect(Collectors.toMap(AccountBalance::id, AccountBalance::balance));
         
@@ -47,5 +55,35 @@ public class ForecastService {
         }
         
         return new ForecastResult(rulesForecast, accountsForecast);
+    }
+    
+    public ListDto forecastTo(LocalDate to, Account account, Long chatId) {
+        Map<LocalDate, List<PeriodicChangeRule>> map = repository.findAllByChatId(chatId).stream()
+            .flatMap(periodicChange -> periodicChange.getRules().stream())
+            .collect(Collectors.groupingBy(PeriodicChangeRule::getNextDay));
+        AccountHistory last = accountHistoryRepository.findLast(account.getId());
+        int balance = last.getBalance();
+        
+        List<String> result = new ArrayList<>();
+        result.add(LocalDate.now().format(DAY) + ": " + RUB.format(balance) + "₽");
+        for (LocalDate current = LocalDate.now(); !current.isAfter(to); current = current.plusDays(1)) {
+            List<PeriodicChangeRule> periodicChangeRules = map.remove(current);
+            if (periodicChangeRules != null) {
+                for (PeriodicChangeRule rule : periodicChangeRules) {
+                    balance = balance + rule.getSum();
+                    result.add(String.format(
+                        "%s: %s₽ (%s %s)",
+                        current.format(DAY),
+                        RUB.format(balance),
+                        rule.getName(),
+                        RUB.format(rule.getSum()))
+                    );
+                    LocalDate nextDay = rule.getType().next(rule.getNextDay(), rule.getPass());
+                    PeriodicChangeRule nextRule = rule.withNextDay(nextDay);
+                    map.computeIfAbsent(nextDay, day -> new ArrayList<>()).add(nextRule);
+                }
+            }
+        }
+        return new ListDto(result);
     }
 }

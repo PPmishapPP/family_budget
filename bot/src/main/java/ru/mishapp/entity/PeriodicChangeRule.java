@@ -10,6 +10,7 @@ import lombok.With;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.relational.core.mapping.Table;
+import ru.mishapp.Constants;
 
 @Table("periodic_change_rule")
 @Getter
@@ -51,7 +52,7 @@ public class PeriodicChangeRule {
     }
     
     public String toTelegram() {
-        return String.format("%s(%d₽, %s)", name, sum, type.description);
+        return String.format("%s(%s₽, %s)", name, Constants.RUB.format(sum), type.description);
     }
     
     
