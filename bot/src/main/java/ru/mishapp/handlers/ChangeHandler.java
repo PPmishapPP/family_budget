@@ -2,6 +2,7 @@ package ru.mishapp.handlers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import ru.mishapp.Constants;
 import ru.mishapp.annotations.TelegramCommand;
 import ru.mishapp.annotations.TelegramHandler;
 import ru.mishapp.annotations.TelegramParam;
@@ -25,7 +26,7 @@ public class ChangeHandler {
     ) {
         Change change = new Change(accountName, Integer.parseInt(sum), comment);
         int balance = changeService.changeBalance(change, chatId);
-        return String.format("Баланс у счёта %s изменён. Текущий баланс: %d₽", change.name(), balance);
+        return String.format("Баланс у счёта %s изменён. Текущий баланс: %s₽", change.name(), Constants.RUB.format(balance));
     }
     
     @TelegramCommand("снять")

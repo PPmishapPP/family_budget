@@ -66,11 +66,17 @@ public class ForecastService {
         
         List<String> result = new ArrayList<>();
         result.add(LocalDate.now().format(DAY) + ": " + RUB.format(balance) + "₽");
+        int min = balance;
+        LocalDate minBalanceDay = LocalDate.now();
         for (LocalDate current = LocalDate.now(); !current.isAfter(to); current = current.plusDays(1)) {
             List<PeriodicChangeRule> periodicChangeRules = map.remove(current);
             if (periodicChangeRules != null) {
                 for (PeriodicChangeRule rule : periodicChangeRules) {
                     balance = balance + rule.getSum();
+                    if (balance <= min) {
+                        min = balance;
+                        minBalanceDay = current;
+                    }
                     result.add(String.format(
                         "%s: %s₽ (%s %s)",
                         current.format(DAY),
@@ -84,6 +90,6 @@ public class ForecastService {
                 }
             }
         }
-        return new ListDto(result);
+        return new ListDto(result, String.format("Минимум %s: %s₽", DAY.format(minBalanceDay), RUB.format(min)));
     }
 }
