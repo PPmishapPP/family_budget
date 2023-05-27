@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.mishapp.Constants;
 import ru.mishapp.IBot;
 import ru.mishapp.dto.AccountNames;
 import ru.mishapp.entity.PeriodicChange;
@@ -50,8 +51,8 @@ public class PeriodicChangeScheduler {
                 ApplyResult applyResult = accountService.applyRule(rule, nextDay);
                 nextDay = rule.getType().next(nextDay, rule.getPass());
                 String message = String.format(
-                    "Применено правило - %s%nТекущий баланс на счету %s: %d",
-                    rule.toTelegram(), accounts.get(rule.getTargetAccountId()), applyResult.TargetAccountBalance()
+                    "Применено правило - %s%nТекущий баланс на счету %s: %s",
+                    rule.toTelegram(), accounts.get(rule.getTargetAccountId()), Constants.RUB.format(applyResult.TargetAccountBalance())
                 );
                 messages.computeIfAbsent(chatId, id -> new ArrayList<>()).add(message);
             }

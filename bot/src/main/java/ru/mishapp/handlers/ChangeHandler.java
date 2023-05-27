@@ -39,6 +39,6 @@ public class ChangeHandler {
     ) {
         Change change = new Change(accountName, -1 * Integer.parseInt(sum), comment);
         int balance = changeService.changeBalance(change, chatId);
-        return String.format("Баланс у счёта %s изменён. Текущий баланс: %d₽", change.name(), balance);
+        return String.format("Баланс у счёта %s изменён. Текущий баланс: %s₽", change.name(), Constants.RUB.format(balance));
     }
 }
