@@ -24,4 +24,10 @@ public class FutureHandler {
         Map<Long, List<String>> messages = ruleExecuteService.ruleExecute(LocalDate.now().plusDays(1));
         return String.join("\n", messages.getOrDefault(chatId, List.of()));
     }
+    
+    @TelegramCommand("послезавтра")
+    public String afterTomorow(Long chatId) {
+        Map<Long, List<String>> messages = ruleExecuteService.ruleExecute(LocalDate.now().plusDays(2));
+        return String.join("\n", messages.getOrDefault(chatId, List.of()));
+    }
 }
