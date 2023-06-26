@@ -2,8 +2,8 @@ package ru.mishapp.dto;
 
 import java.util.List;
 
-public record ListDto(List<String> messages, String conclusion) {
+public record ListDto(List<String> messages) {
     public String toTelegram() {
-        return String.join("\n", messages) + "\n-----------------\n" + conclusion;
+        return String.join("\n", messages);
     }
 }
