@@ -1,13 +1,15 @@
 package ru.mishapp.handlers;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.mishapp.annotations.TelegramCommand;
 import ru.mishapp.annotations.TelegramHandler;
 import ru.mishapp.annotations.TelegramParam;
 import ru.mishapp.entity.ToDoItem;
+import ru.mishapp.services.PurchasesService;
 import ru.mishapp.services.ToDoItemService;
+
+import java.util.List;
 
 @TelegramHandler("дела")
 @Service
@@ -16,6 +18,7 @@ import ru.mishapp.services.ToDoItemService;
 public class ToDoListHandler {
     
     private final ToDoItemService toDoListService;
+    private final PurchasesService purchasesService;
     
     @TelegramCommand()
     public String readAll(Long chatId) {
@@ -49,5 +52,12 @@ public class ToDoListHandler {
     ) {
         ToDoItem item = toDoListService.delete(Long.parseLong(itemNumber));
         return "Дело сделано: " + item.toTelegram();
+    }
+    
+    @TelegramCommand("покупки")
+    public String purchases(
+        Long chatId
+    ) {
+        return purchasesService.readAll(chatId).toTelegram();
     }
 }

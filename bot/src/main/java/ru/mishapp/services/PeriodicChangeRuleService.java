@@ -1,6 +1,5 @@
 package ru.mishapp.services;
 
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -11,6 +10,9 @@ import ru.mishapp.entity.PeriodicChangeRule;
 import ru.mishapp.repository.AccountRepository;
 import ru.mishapp.repository.PeriodicChangeRepository;
 import ru.mishapp.repository.PeriodicChangeRuleRepository;
+
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -53,5 +55,11 @@ public class PeriodicChangeRuleService {
         builder.nextDay(rule.startDay());
         
         return periodicChangeRuleRepository.save(builder.build());
+    }
+    
+    public Set<PeriodicChangeRule> readAllByName(String name, Long chatId) {
+        return periodicChangeRepository.findByNameAndChatId(name, chatId)
+            .map(PeriodicChange::getRules)
+            .orElse(Set.of());
     }
 }

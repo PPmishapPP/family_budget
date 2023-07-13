@@ -46,6 +46,9 @@ public class ForecastService {
                     accountBalance.computeIfPresent(rule.getTargetAccountId(), (key, value) -> value + rule.getSum());
                     ruleSum += rule.getSum();
                     nextDay = rule.getType().next(nextDay, rule.getPass());
+                    if (nextDay == null) {
+                        break;
+                    }
                 }
             }
             rulesForecast.add(new ForecastItem(periodicChange.getName(), ruleSum));

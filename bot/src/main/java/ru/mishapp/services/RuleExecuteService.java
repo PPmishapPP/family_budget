@@ -1,12 +1,5 @@
 package ru.mishapp.services;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.mishapp.Constants;
@@ -17,6 +10,14 @@ import ru.mishapp.repository.AccountRepository;
 import ru.mishapp.repository.PeriodicChangeRepository;
 import ru.mishapp.repository.PeriodicChangeRuleRepository;
 import ru.mishapp.services.records.ApplyResult;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -41,15 +42,21 @@ public class RuleExecuteService {
             
             while (!nextDay.isAfter(day)) {
                 ApplyResult applyResult = accountService.applyRule(rule, nextDay);
-                nextDay = rule.getType().next(nextDay, rule.getPass());
                 String message = String.format(
                     "Применено правило - %s%nТекущий баланс на счету %s: %s",
                     rule.toTelegram(), accounts.get(rule.getTargetAccountId()), Constants.RUB.format(applyResult.TargetAccountBalance())
                 );
                 messages.computeIfAbsent(chatId, id -> new ArrayList<>()).add(message);
+                
+                nextDay = rule.getType().next(nextDay, rule.getPass());
+                if (nextDay == null) {
+                    break;
+                }
             }
             
-            if (!nextDay.isEqual(rule.getNextDay())) {
+            if (nextDay == null) {
+                periodicChangeRuleRepository.delete(rule);
+            } else if (!nextDay.isEqual(rule.getNextDay())) {
                 periodicChangeRuleRepository.save(rule.withNextDay(nextDay));
             }
         }

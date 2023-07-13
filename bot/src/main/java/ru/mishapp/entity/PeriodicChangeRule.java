@@ -1,9 +1,7 @@
 package ru.mishapp.entity;
 
 
-import java.time.LocalDate;
-import java.util.Optional;
-import java.util.function.BiFunction;
+import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.With;
@@ -11,6 +9,10 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.relational.core.mapping.Table;
 import ru.mishapp.Constants;
+
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.function.BiFunction;
 
 @Table("periodic_change_rule")
 @Getter
@@ -59,7 +61,8 @@ public class PeriodicChangeRule {
     public enum Type {
         MONTHLY("Ежемесячно", LocalDate::plusMonths),
         WEEKLY("Еженедельно", LocalDate::plusWeeks),
-        DAILY("Ежедневно", LocalDate::plusDays);
+        DAILY("Ежедневно", LocalDate::plusDays),
+        ONE("Единоразово", (d, i) -> null);
         
         private final String description;
         private final BiFunction<LocalDate, Integer, LocalDate> next;
@@ -79,6 +82,7 @@ public class PeriodicChangeRule {
             return Optional.empty();
         }
         
+        @Nullable
         public LocalDate next(LocalDate day, int pass) {
             return next.apply(day, pass + 1);
         }
