@@ -41,4 +41,16 @@ public class ChangeHandler {
         int balance = changeService.changeBalance(change, chatId);
         return String.format("Баланс у счёта %s изменён. Текущий баланс: %s₽", change.name(), Constants.RUB.format(balance));
     }
+    
+    @TelegramCommand("обновить")
+    @SneakyThrows
+    public String update(
+        @TelegramParam("счёт") String accountName,
+        @TelegramParam("баланс") String targetBalance,
+        @TelegramParam("комментарий") String comment,
+        Long chatId
+    ) {
+        int balance = changeService.update(accountName, comment, Integer.parseInt(targetBalance), chatId);
+        return String.format("Баланс у счёта %s изменён. Текущий баланс: %s₽", accountName, Constants.RUB.format(balance));
+    }
 }

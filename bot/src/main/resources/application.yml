@@ -17,4 +17,5 @@ logging:
 
 schedule:
   periodic-rule: "0 */5 * * * *"
+  duty: "0 */5 * * * *"
   todo-reminder: "0 0 8 * * *"

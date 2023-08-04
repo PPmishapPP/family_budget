@@ -5,6 +5,7 @@ import jakarta.annotation.Nonnull;
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.With;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.relational.core.mapping.Table;

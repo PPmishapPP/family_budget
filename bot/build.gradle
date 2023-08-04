@@ -14,13 +14,12 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 }
 
-shadowJar {
-    archiveBaseName.set('tg_bot')
-    archiveVersion.set('0.1')
-    archiveClassifier.set('')
+jar {
     manifest {
-        attributes 'Main-Class': 'ru.mishapp.BotApp'
+        attributes "Main-Class": "ru.mishapp.BotApp"
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
-
-tasks.build.dependsOn tasks.shadowJar

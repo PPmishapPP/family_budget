@@ -29,4 +29,18 @@ public class ChangeService {
             throw new IllegalArgumentException("Не существует счёта с именем " + change.name());
         }
     }
+    
+    public int update(String name, String comment, int targetBalance, long chatId) {
+        Optional<Account> byName = accountRepository.findByNameAndChatId(name, chatId);
+        if (byName.isPresent()) {
+            AccountHistory lastAccountHistory = accountHistoryRepository.findLast(byName.get().getId());
+            int sum = targetBalance - lastAccountHistory.getBalance();
+            Change change = new Change(name, sum, comment);
+            AccountHistory newAccountHistory = lastAccountHistory.applyChange(change);
+            accountHistoryRepository.save(newAccountHistory);
+            return newAccountHistory.getBalance();
+        } else {
+            throw new IllegalArgumentException("Не существует счёта с именем " + name);
+        }
+    }
 }
