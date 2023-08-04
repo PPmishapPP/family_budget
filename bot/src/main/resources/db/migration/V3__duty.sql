@@ -1,3 +1,12 @@
+create table "user"
+(
+    id      bigserial   not null primary key,
+    chat_id bigint      not null,
+    name    varchar(50) not null,
+    unique (chat_id, name)
+);
+
+
 create table duty
 (
     id           bigserial   not null primary key,
@@ -10,13 +19,6 @@ create table duty
     unique (chat_id, name)
 );
 
-create table "user"
-(
-    id      bigserial   not null primary key,
-    chat_id bigint      not null,
-    name    varchar(50) not null,
-    unique (chat_id, name)
-);
 
 create table duty_user
 (
