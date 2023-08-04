@@ -1,3 +1,25 @@
 plugins {
     id 'java'
+    id 'com.github.johnrengelman.shadow'
+    id 'org.springframework.boot' version '3.0.6'
+}
+
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.flywaydb:flyway-core'
+    implementation project(':telegram_starter')
+    runtimeOnly 'org.postgresql:postgresql'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "ru.mishapp.BotApp"
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
