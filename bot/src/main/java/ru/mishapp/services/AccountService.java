@@ -1,14 +1,9 @@
 package ru.mishapp.services;
 
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.mishapp.Constants;
 import ru.mishapp.dto.AccountBalance;
 import ru.mishapp.entity.Account;
 import ru.mishapp.entity.AccountHistory;
@@ -16,6 +11,10 @@ import ru.mishapp.entity.PeriodicChangeRule;
 import ru.mishapp.repository.AccountHistoryRepository;
 import ru.mishapp.repository.AccountRepository;
 import ru.mishapp.services.records.ApplyResult;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -47,17 +46,17 @@ public class AccountService {
     }
     
     @Transactional
-    public ApplyResult applyRule(PeriodicChangeRule rule, LocalDate day) {
+    public ApplyResult applyRule(PeriodicChangeRule rule) {
         AccountHistory lastTarget = accountHistoryRepository.findLast(rule.getTargetAccountId());
         AccountHistory saveTarget = accountHistoryRepository.save(
-            createNext(lastTarget, rule.getSum(), rule.getName(), day)
+            createNext(lastTarget, rule.getSum(), rule.getName())
         );
         Integer targetAccountBalance = saveTarget.getBalance();
         
         if (rule.getReceivingAccountId() != null) {
             AccountHistory lastReceiving = accountHistoryRepository.findLast(rule.getReceivingAccountId());
             AccountHistory saveReceiving = accountHistoryRepository.save(
-                createNext(lastReceiving, rule.getSum() * -1, rule.getName(), day)
+                createNext(lastReceiving, rule.getSum() * -1, rule.getName())
             );
             return new ApplyResult(targetAccountBalance, saveReceiving.getBalance());
         } else {
@@ -65,13 +64,13 @@ public class AccountService {
         }
     }
     
-    private AccountHistory createNext(AccountHistory last, int sum, String ruleName, LocalDate ruleDay) {
+    private AccountHistory createNext(AccountHistory last, int sum, String ruleName) {
         return AccountHistory.builder()
             .accountId(last.getAccountId())
             .sum(sum)
             .balance(last.getBalance() + sum)
             .dateTime(LocalDateTime.now())
-            .comment(String.format("%s %s", ruleName, ruleDay.format(Constants.DAY)))
+            .comment(ruleName)
             .build();
     }
     
