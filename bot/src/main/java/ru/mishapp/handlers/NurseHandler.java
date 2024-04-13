@@ -18,7 +18,7 @@ public class NurseHandler {
 
     private final NurseService nurseService;
 
-    @TelegramCommand("приведу")
+    @TelegramCommand("привели")
     public String leadToNurse(@TelegramParam("в") String time, Long chatId) {
         LocalDate visitDay = LocalDate.now();
         LocalTime visitStart = LocalTime.parse(time);
@@ -26,7 +26,7 @@ public class NurseHandler {
         return "Настю привели в " + visitStart.toString();
     }
 
-    @TelegramCommand("заберу")
+    @TelegramCommand("забрали")
     public String takeFromNurse(@TelegramParam("в") String time, Long chatId) {
         LocalDate visitDay = LocalDate.now();
         LocalTime visitEnd = LocalTime.parse(time);
