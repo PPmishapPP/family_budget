@@ -9,7 +9,6 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
 
 @Table("duty")
 @Getter
@@ -52,22 +51,6 @@ public class Duty {
         this.lastUserId = lastUserId;
         this.dutyAccountId = dutyAccountId;
         this.award = award;
-    }
-    
-    public Long getNextUser() {
-        if (lastUserId != null) {
-            for (int i = 0; i < users.size(); i++) {
-                if (Objects.equals(users.get(i).id.getId(), lastUserId)) {
-                    if (users.size() > i + 1) {
-                        return users.get(i + 1).id.getId();
-                    } else {
-                        return users.get(0).id.getId();
-                    }
-                }
-            }
-        }
-        
-        return users.get(0).id.getId();
     }
     
 }
