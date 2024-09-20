@@ -5,12 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.mishapp.Constants;
 import ru.mishapp.IBot;
-import ru.mishapp.dto.Change;
-import ru.mishapp.entity.AccountHistory;
 import ru.mishapp.entity.DutyUser;
-import ru.mishapp.repository.AccountHistoryRepository;
+import ru.mishapp.entity.User;
 import ru.mishapp.repository.DutyRepository;
 import ru.mishapp.repository.UserRepository;
 
@@ -25,7 +22,6 @@ public class DutyScheduler {
     
     private final DutyRepository dutyRepository;
     private final UserRepository userRepository;
-    private final AccountHistoryRepository accountHistoryRepository;
     private final Random random = new Random();
     private final IBot bot;
     
@@ -42,25 +38,29 @@ public class DutyScheduler {
                 Long nextUserId = users.get(random.nextInt(users.size())).getId().getId();
                 if (nextUserId != null) {
                     userRepository.findById(nextUserId).ifPresent(user -> {
-                        AccountHistory last = accountHistoryRepository.findLast(duty.getDutyAccountId());
-                        AccountHistory save = accountHistoryRepository.save(
-                            last.applyChange(new Change("", duty.getAward() * days, "на зарплату"))
-                        );
                         
                         dutyRepository.updateNext(duty.getId(), nextUserId);
-                        
-                        String message = String.format(
-                            "%s, сегодня у тебя есть возможность помыть посуду и заработать %s₽",
-                            user.getName(),
-                            Constants.RUB.format(save.getBalance())
-                        );
+                        int dayOfMonth = LocalDate.now().getDayOfMonth();
+                        String message = getMessage(user, dayOfMonth);
                         bot.sendMessage(message, duty.getChatId());
                     });
                 }
             }
-            
         });
+    }
+    
+    private static String getMessage(User user, int dayOfMonth) {
+        List<String> messages = List.of(
+            "Напоминаю всем, что нужно мыть посуду за собой. Особенно тебе, %s",
+            "%s, а ты мыл(а) вчера посуду за собой? Сегодня не забудь!",
+            "Аля, напоминаю: если ты только что приготовил яичницу и сковородка слишком горячая, чтобы её мыть, то нужно её охладить холодной водой и помыть сразу",
+            "Аля, если ты готовишься мыть гору посуды и видишь, что какая-то тарелка особо грязная, то можно её замочить сразу и помыть в конце. Другие сценарии \"замачивания\" запрещены - надо мыть сразу."
+        );
         
         
+        return String.format(
+            messages.get(dayOfMonth % messages.size()),
+            user.getName()
+        );
     }
 }

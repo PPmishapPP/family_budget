@@ -1,10 +1,11 @@
 package ru.mishapp;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Constants {

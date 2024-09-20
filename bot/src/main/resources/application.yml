@@ -2,14 +2,14 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/family_budget
     username: usr
-    password: pwd
+    password: usr
   flyway:
     enabled: true
 
 telegram:
   bot:
-    name: FamilyBadgetPP_bot
-    token: 6287259982:AAEAol0Pp9avlmmY5Pji96pTdHh7yfgTF98
+    name: ${BOT_NAME}
+    token: ${BOT_TOKEN}
 
 logging:
   level:
