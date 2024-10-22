@@ -1,11 +1,10 @@
 package ru.mishapp.services;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.mishapp.dto.SubmitMeterReadsDTO;
 import ru.mishapp.entity.SubmitMeterReads;
-import ru.mishapp.mapper.SubmitMeterReadsEntityDTOMapper;
 import ru.mishapp.repository.SubmitMeterReadsRepository;
 
 import java.time.LocalDateTime;
@@ -18,13 +17,21 @@ import java.util.regex.Pattern;
 public class SubmitMeterReadsService {
 
     private final SubmitMeterReadsRepository submitMeterReadsRepository;
-    private final SubmitMeterReadsEntityDTOMapper mapper;
 
     public final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     public static final String MESSAGE_METERS_SUBMITTED = "Показания сданы." +
             "\nВремя сдачи показаний перенесено на %s";
     public static final String MESSAGE_NUMBER_NOT_FOUND_IN_STRING = "Число не найдено в строке.";
+
+    @Value("${datetime.day}")
+    public int dayForReschedule;
+
+    @Value("${datetime.hour}")
+    public int hourForReschedule;
+
+    @Value("${datetime.minute}")
+    public int minuteForReschedule;
 
     @Transactional
     public String setDatetimeOfSubmitMeterReads(Long chatId) {
@@ -46,26 +53,18 @@ public class SubmitMeterReadsService {
             return MESSAGE_NUMBER_NOT_FOUND_IN_STRING;
         }
 
-        return rescheduleMetersSubmitBySpecifiedHours(chatId, hoursInt);
+        return putNextMetersSubmitTermIntoDB(chatId, LocalDateTime.now().plusHours(hoursInt));
     }
 
-    public String rescheduleMetersSubmitToNextMonth(Long chatId) {
+    private String rescheduleMetersSubmitToNextMonth(Long chatId) {
         LocalDateTime nowDatetime = LocalDateTime.now();
         LocalDateTime rescheduledDatetime = LocalDateTime.of(
                 nowDatetime.getYear(),
                 nowDatetime.getMonth().plus(1),
-                23,
-                12,
-                0
+                dayForReschedule,
+                hourForReschedule,
+                minuteForReschedule
         );
-        return putNextMetersSubmitTermIntoDB(chatId, rescheduledDatetime);
-    }
-
-    public String rescheduleMetersSubmitBySpecifiedHours(
-            Long chatId,
-            int hours
-    ) {
-        LocalDateTime rescheduledDatetime = LocalDateTime.now().plusHours(hours);
         return putNextMetersSubmitTermIntoDB(chatId, rescheduledDatetime);
     }
 
@@ -73,18 +72,14 @@ public class SubmitMeterReadsService {
             Long chatId,
             LocalDateTime datetime
     ) {
-        SubmitMeterReadsDTO submitMeterReadsDTO = mapper.entityToDTO(readByChatId(chatId));
-        submitMeterReadsDTO.setDatetimeOfSubmitMeterReads(datetime);
+        SubmitMeterReads submitMeterReads = submitMeterReadsRepository.readByChatId(chatId);
+        submitMeterReads = submitMeterReads.toBuilder()
+                .datetimeExpected(datetime)
+                .build();
 
-        SubmitMeterReads submitMeterReads = submitMeterReadsRepository.save(
-                mapper.dtoToEntity(submitMeterReadsDTO)
-        );
+        submitMeterReads = submitMeterReadsRepository.save(submitMeterReads);
 
-        return submitMeterReads.getDatetimeOfSubmitMeterReads().format(formatter);
-    }
-
-    private SubmitMeterReads readByChatId(Long chatId) {
-        return submitMeterReadsRepository.readByChatId(chatId);
+        return submitMeterReads.getDatetimeExpected().format(formatter);
     }
 
 }
