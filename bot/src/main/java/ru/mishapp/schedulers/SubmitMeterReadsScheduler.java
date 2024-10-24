@@ -18,7 +18,7 @@ public class SubmitMeterReadsScheduler {
     @Scheduled(cron = "${schedule.submit-meter-reminder}")
     @Transactional
     public void execute() {
-        submitMeterReadsReminderService.someMethod()
+        submitMeterReadsReminderService.getChatIdWithReminderMessages()
                 .forEach((chatId, message) -> iBot.sendMessage(message, chatId));
     }
 }

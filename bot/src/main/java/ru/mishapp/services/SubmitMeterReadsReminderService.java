@@ -20,7 +20,7 @@ public class SubmitMeterReadsReminderService {
 
     private static final String DEMAND_TO_SEND_METER_READS = "Необходимо сдать показания счетчиков";
 
-    public Map<Long, String> someMethod() {
+    public Map<Long, String> getChatIdWithReminderMessages() {
         Map<Long, String> map = new HashMap<>();
 
         LocalTime timeNow = LocalTime.now();

@@ -6,5 +6,5 @@ create table submit_meter_reads
     chat_id                        bigserial
                                              not null
         unique,
-    datetime_expected timestamp not null
+    datetime_of_submit_meter_reads timestamp not null
 );
