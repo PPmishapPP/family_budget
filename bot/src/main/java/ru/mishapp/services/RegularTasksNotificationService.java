@@ -28,15 +28,11 @@ public class RegularTasksNotificationService {
 				long chatId = task.getChatId();
 				LocalDateTime now = LocalDateTime.now();
 				if (now.isAfter(notificationDatetime)) {
-					notificationsToSend.add(createNotification(chatId, task.getDescription()));
+					notificationsToSend.add(new Notification(chatId, task.getDescription()));
 				}
 			});
 		}
 
 		return notificationsToSend;
-	}
-
-	private Notification createNotification(long chatId, String description) {
-		return new Notification(chatId, description);
 	}
 }

@@ -9,7 +9,6 @@ import ru.mishapp.repository.RegularTasksRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +17,8 @@ public class RegularTasksService {
 	private final RegularTasksRepository regularTasksRepository;
 
 	public String done(String name, Long chatId) {
-		RegularTask regularTask = getRegularTaskByTaskNameAndChatId(name, chatId);
+		RegularTask regularTask = regularTasksRepository.findByNameAndChatId(name, chatId)
+				.orElseThrow(() -> new IllegalArgumentException(String.format("Нет задачи с таким именем: %s", name)));
 		LocalDateTime datetimeNotification = createNewNotificationDate(regularTask);
 		RegularTask newRegularTask = regularTask.withDatetimeNotification(datetimeNotification);
 		regularTasksRepository.save(newRegularTask);
@@ -37,19 +37,12 @@ public class RegularTasksService {
 	}
 
 	public String putOff(String name, String hours, Long chatId) {
-		RegularTask regularTask = getRegularTaskByTaskNameAndChatId(name, chatId);
+		RegularTask regularTask = regularTasksRepository.findByNameAndChatId(name, chatId)
+				.orElseThrow(() -> new IllegalArgumentException(String.format("Нет задачи с таким именем: %s", name)));
 		LocalDateTime datetimeNotification = regularTask.getDatetimeNotification();
 		LocalDateTime newTime = datetimeNotification.plusHours(Long.parseLong(hours));
 		RegularTask newRegularTask = regularTask.withDatetimeNotification(newTime);
 		regularTasksRepository.save(newRegularTask);
 		return String.format("Задание %s перенесено на %s", newRegularTask.getName(), newRegularTask.getDatetimeNotification());
-	}
-
-	private RegularTask getRegularTaskByTaskNameAndChatId(String name, Long chatId) {
-		Optional<RegularTask> optionalRegTask = regularTasksRepository.findByNameAndChatId(name, chatId);
-		if (optionalRegTask.isEmpty()) {
-			throw new IllegalArgumentException(String.format("Нет задачи с таким именем: %s", name));
-		}
-		return optionalRegTask.get();
 	}
 }
