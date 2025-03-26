@@ -7,6 +7,7 @@ import ru.mishapp.dto.PeriodicChangeRuleDTO;
 import ru.mishapp.entity.Account;
 import ru.mishapp.entity.PeriodicChange;
 import ru.mishapp.entity.PeriodicChangeRule;
+import ru.mishapp.enumiration.Type;
 import ru.mishapp.repository.AccountRepository;
 import ru.mishapp.repository.PeriodicChangeRepository;
 import ru.mishapp.repository.PeriodicChangeRuleRepository;
@@ -44,7 +45,7 @@ public class PeriodicChangeRuleService {
         }
         builder.periodicChangeId(periodicChange.get().getId());
         
-        Optional<PeriodicChangeRule.Type> type = PeriodicChangeRule.Type.of(rule.type());
+        Optional<Type> type = Type.of(rule.type());
         if (type.isEmpty()) {
             throw new IllegalArgumentException("Не существует типа правила " + rule.type());
         }

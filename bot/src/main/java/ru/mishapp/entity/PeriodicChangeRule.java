@@ -1,7 +1,5 @@
 package ru.mishapp.entity;
 
-
-import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.With;
@@ -9,10 +7,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.relational.core.mapping.Table;
 import ru.mishapp.Constants;
+import ru.mishapp.enumiration.Type;
 
 import java.time.LocalDate;
-import java.util.Optional;
-import java.util.function.BiFunction;
 
 @Table("periodic_change_rule")
 @Getter
@@ -54,37 +51,6 @@ public class PeriodicChangeRule {
     }
     
     public String toTelegram() {
-        return String.format("%s(%s₽, %s)", name, Constants.RUB.format(sum), type.description);
-    }
-    
-    
-    public enum Type {
-        MONTHLY("Ежемесячно", LocalDate::plusMonths),
-        WEEKLY("Еженедельно", LocalDate::plusWeeks),
-        DAILY("Ежедневно", LocalDate::plusDays),
-        ONE("Единоразово", (d, i) -> null);
-        
-        private final String description;
-        private final BiFunction<LocalDate, Integer, LocalDate> next;
-        
-        
-        Type(String description, BiFunction<LocalDate, Integer, LocalDate> next) {
-            this.description = description;
-            this.next = next;
-        }
-        
-        public static Optional<Type> of(String type) {
-            for (Type value : values()) {
-                if (value.description.equals(type)) {
-                    return Optional.of(value);
-                }
-            }
-            return Optional.empty();
-        }
-        
-        @Nullable
-        public LocalDate next(LocalDate day, int pass) {
-            return next.apply(day, pass + 1);
-        }
+        return String.format("%s(%s₽, %s)", name, Constants.RUB.format(sum), type.getDescription());
     }
 }
