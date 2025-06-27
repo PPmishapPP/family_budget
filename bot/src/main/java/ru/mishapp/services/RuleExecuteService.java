@@ -38,7 +38,7 @@ public class RuleExecuteService {
             while (!nextDay.isAfter(day)) {
                 ApplyResult applyResult = accountService.applyRule(rule);
                 String message = String.format(
-                    "%s. Баланс %s",
+                    "%s = %s₽",
                     rule.toTelegram(), Constants.RUB.format(applyResult.TargetAccountBalance())
                 );
                 messages.computeIfAbsent(chatId, id -> new ArrayList<>()).add(message);

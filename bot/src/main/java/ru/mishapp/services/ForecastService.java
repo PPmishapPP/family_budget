@@ -66,7 +66,7 @@ public class ForecastService {
         List<String> result = forecastCalculator.calc(account, to, chatId)
             .stream()
             .map(calcItem -> String.format(
-                "%s: %s₽ (%s %s)",
+                "%s: %s₽ %s %s",
                 calcItem.day().format(DAY),
                 RUB.format(calcItem.balance()),
                 calcItem.rule().getName(),
@@ -81,6 +81,7 @@ public class ForecastService {
         List<CalcItem> calcItems = forecastCalculator.calc(account, to, chatId);
         
         List<String> result = new ArrayList<>();
+        int oldMin = -1;
         while (true) {
             int min = calcItems.get(0).balance();
             int minIndex = 0;
@@ -101,11 +102,21 @@ public class ForecastService {
                         break;
                     }
                 }
-                result.add(String.format(
-                    "%s: %s₽",
-                    income.day().format(DAY),
-                    RUB.format(min)
-                ));
+                if (oldMin == -1) {
+                    result.add(String.format(
+                        "%s: %s₽",
+                        income.day().format(DAY),
+                        RUB.format(min)
+                    ));
+                } else {
+                    result.add(String.format(
+                        "%s: %s₽ (+%s)",
+                        income.day().format(DAY),
+                        RUB.format(min),
+                        RUB.format((long) min - oldMin)
+                    ));
+                }
+                oldMin = min;
             }
             
             if (minIndex + 1 == calcItems.size()) {
@@ -114,6 +125,5 @@ public class ForecastService {
             
             calcItems = calcItems.subList(minIndex + 1, calcItems.size());
         }
-        
     }
 }

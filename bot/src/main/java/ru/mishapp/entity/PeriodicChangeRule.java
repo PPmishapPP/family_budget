@@ -51,6 +51,6 @@ public class PeriodicChangeRule {
     }
     
     public String toTelegram() {
-        return String.format("%s(%s₽, %s)", name, Constants.RUB.format(sum), type.getDescription());
+        return String.format("%s: %s₽", name, Constants.RUB.format(sum));
     }
 }
