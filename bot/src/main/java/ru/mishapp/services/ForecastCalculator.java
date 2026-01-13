@@ -39,7 +39,7 @@ public class ForecastCalculator {
                     balance = balance + rule.getSum();
                     result.add(new CalcItem(current, balance, rule));
                     LocalDate nextDay = rule.getType().next(rule.getNextDay(), rule.getPass());
-                    if (nextDay == null || nextDay.isAfter(rule.getEndDate())) {
+                    if (nextDay == null || (rule.getEndDate() != null && nextDay.isAfter(rule.getEndDate()))) {
                         continue;
                     }
                     PeriodicChangeRule nextRule = rule.withNextDay(nextDay);
