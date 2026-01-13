@@ -27,17 +27,21 @@ public class PeriodicChangeRule {
     private final Type type;
     private final int pass;
     private final LocalDate nextDay;
+    private final boolean active;
+    private final LocalDate endDate;
     
     @PersistenceCreator
     public PeriodicChangeRule(
-        Long id,
-        long periodicChangeId,
-        long targetAccountId,
-        Long receivingAccountId,
-        String name, int sum,
-        Type type,
-        int pass,
-        LocalDate nextDay
+		    Long id,
+		    long periodicChangeId,
+		    long targetAccountId,
+		    Long receivingAccountId,
+		    String name, int sum,
+		    Type type,
+		    int pass,
+		    LocalDate nextDay,
+		    boolean active,
+            LocalDate endDate
     ) {
         this.id = id;
         this.periodicChangeId = periodicChangeId;
@@ -48,9 +52,25 @@ public class PeriodicChangeRule {
         this.type = type;
         this.pass = pass;
         this.nextDay = nextDay;
+        this.active = active;
+	    this.endDate = endDate;
     }
-    
-    public String toTelegram() {
+
+	public PeriodicChangeRule(long periodicChangeId, long targetAccountId, Long receivingAccountId, String name, int sum, Type type, int pass, LocalDate nextDay, boolean active, LocalDate endDate) {
+		this.id = null;
+		this.periodicChangeId = periodicChangeId;
+		this.targetAccountId = targetAccountId;
+		this.receivingAccountId = receivingAccountId;
+		this.name = name;
+		this.sum = sum;
+		this.type = type;
+		this.pass = pass;
+		this.nextDay = nextDay;
+		this.active = active;
+		this.endDate = endDate;
+	}
+
+	public String toTelegram() {
         return String.format("%s: %s₽", name, Constants.RUB.format(sum));
     }
 }

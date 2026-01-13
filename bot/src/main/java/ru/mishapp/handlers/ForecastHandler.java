@@ -10,7 +10,6 @@ import ru.mishapp.dto.ListDto;
 import ru.mishapp.entity.Account;
 import ru.mishapp.services.AccountService;
 import ru.mishapp.services.ForecastService;
-import ru.mishapp.services.records.ForecastResult;
 
 import java.time.LocalDate;
 
@@ -22,13 +21,6 @@ public class ForecastHandler {
     
     private final ForecastService forecastService;
     private final AccountService accountService;
-    
-    @TelegramCommand("на")
-    public String forecastFor(@TelegramParam("дату") String date, Long chatId) {
-        LocalDate day = LocalDate.parse(date, Constants.DAY);
-        ForecastResult forecastResult = forecastService.forecastFor(day, chatId);
-        return forecastResult.toTelegram();
-    }
     
     @TelegramCommand("до")
     public String forecastTo(
