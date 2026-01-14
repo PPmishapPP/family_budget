@@ -21,7 +21,6 @@ public class PeriodicChangeRule {
     private final Long id;
     private final long periodicChangeId;
     private final long targetAccountId;
-    private final Long receivingAccountId;
     private final String name;
     private final int sum;
     private final Type type;
@@ -35,7 +34,6 @@ public class PeriodicChangeRule {
 		    Long id,
 		    long periodicChangeId,
 		    long targetAccountId,
-		    Long receivingAccountId,
 		    String name, int sum,
 		    Type type,
 		    int pass,
@@ -46,7 +44,6 @@ public class PeriodicChangeRule {
         this.id = id;
         this.periodicChangeId = periodicChangeId;
         this.targetAccountId = targetAccountId;
-        this.receivingAccountId = receivingAccountId;
         this.name = name;
         this.sum = sum;
         this.type = type;
@@ -56,11 +53,10 @@ public class PeriodicChangeRule {
 	    this.endDate = endDate;
     }
 
-	public PeriodicChangeRule(long periodicChangeId, long targetAccountId, Long receivingAccountId, String name, int sum, Type type, int pass, LocalDate nextDay, boolean active, LocalDate endDate) {
+	public PeriodicChangeRule(long periodicChangeId, long targetAccountId, String name, int sum, Type type, int pass, LocalDate nextDay, boolean active, LocalDate endDate) {
 		this.id = null;
 		this.periodicChangeId = periodicChangeId;
 		this.targetAccountId = targetAccountId;
-		this.receivingAccountId = receivingAccountId;
 		this.name = name;
 		this.sum = sum;
 		this.type = type;

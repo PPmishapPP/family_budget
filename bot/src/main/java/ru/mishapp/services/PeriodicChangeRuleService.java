@@ -2,7 +2,6 @@ package ru.mishapp.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import ru.mishapp.dto.PeriodicChangeRuleDTO;
 import ru.mishapp.entity.Account;
 import ru.mishapp.entity.PeriodicChange;
@@ -30,14 +29,6 @@ public class PeriodicChangeRuleService {
             throw new IllegalArgumentException("Не существует счёта с именем " + rule.taName());
         }
         builder.targetAccountId(targetAccount.get().getId());
-        
-        if (StringUtils.hasText(rule.recName())) {
-            Optional<Account> recAccount = accountRepository.findByNameAndChatId(rule.recName(), chatId);
-            if (recAccount.isEmpty()) {
-                throw new IllegalArgumentException("Не существует счёта с именем " + rule.recName());
-            }
-            builder.receivingAccountId(recAccount.get().getId());
-        }
         
         Optional<PeriodicChange> periodicChange = periodicChangeRepository.findByNameAndChatId(rule.pcName(), chatId);
         if (periodicChange.isEmpty()) {

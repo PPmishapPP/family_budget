@@ -39,3 +39,6 @@ bin/
 .DS_Store
 /.idea/
 /bot/src/main/resources/application.properties
+/frontend/
+/target/
+/bot/src/main/frontend/
