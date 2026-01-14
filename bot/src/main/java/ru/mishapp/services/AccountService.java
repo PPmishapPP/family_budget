@@ -52,16 +52,8 @@ public class AccountService {
             createNext(lastTarget, rule.getSum(), rule.getName())
         );
         Integer targetAccountBalance = saveTarget.getBalance();
-        
-        if (rule.getReceivingAccountId() != null) {
-            AccountHistory lastReceiving = accountHistoryRepository.findLast(rule.getReceivingAccountId());
-            AccountHistory saveReceiving = accountHistoryRepository.save(
-                createNext(lastReceiving, rule.getSum() * -1, rule.getName())
-            );
-            return new ApplyResult(targetAccountBalance, saveReceiving.getBalance());
-        } else {
-            return new ApplyResult(targetAccountBalance, null);
-        }
+
+        return new ApplyResult(targetAccountBalance, null);
     }
     
     private AccountHistory createNext(AccountHistory last, int sum, String ruleName) {
@@ -73,6 +65,4 @@ public class AccountService {
             .comment(ruleName)
             .build();
     }
-    
-
 }

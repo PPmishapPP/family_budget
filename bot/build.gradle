@@ -1,20 +1,32 @@
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow'
-    id 'org.springframework.boot' version '3.0.6'
+    id 'org.springframework.boot' version "${springBoot}"
+    id 'com.vaadin' version "${vaadin}"
 }
-
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
     implementation project(':telegram_starter')
     runtimeOnly 'org.postgresql:postgresql'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+    implementation "com.vaadin:vaadin-spring-boot-starter:${vaadin}"
+    developmentOnly 'com.vaadin:vaadin-dev'
 
-    testImplementation "org.springframework.boot:spring-boot-starter-test"
-    testAnnotationProcessor "org.projectlombok:lombok"
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+repositories {
+    maven { url = 'https://maven.vaadin.com/vaadin-addons' }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "com.vaadin:vaadin-bom:${vaadin}"
+    }
 }
 
 tasks.named('test') {

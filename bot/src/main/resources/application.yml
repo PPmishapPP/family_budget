@@ -20,3 +20,6 @@ schedule:
   duty: "0 * * * * *"
   todo-reminder: "0 0 8 * * *"
   notifications: "0 0 * * * *"
+
+server:
+  port: 8080
