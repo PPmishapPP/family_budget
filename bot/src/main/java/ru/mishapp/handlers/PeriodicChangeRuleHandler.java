@@ -1,7 +1,6 @@
 package ru.mishapp.handlers;
 
 
-import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import ru.mishapp.Constants;
 import ru.mishapp.annotations.TelegramCommand;
@@ -10,6 +9,8 @@ import ru.mishapp.annotations.TelegramParam;
 import ru.mishapp.dto.PeriodicChangeRuleDTO;
 import ru.mishapp.entity.PeriodicChangeRule;
 import ru.mishapp.services.PeriodicChangeRuleService;
+
+import java.time.LocalDate;
 
 @TelegramHandler(value = "правила", description = "Добавить правило автоматического изменения счетов")
 @RequiredArgsConstructor
@@ -33,7 +34,7 @@ public class PeriodicChangeRuleHandler {
             int intPass = Integer.parseInt(pass);
             LocalDate localDate = LocalDate.parse(startDay, Constants.DAY);
             PeriodicChangeRuleDTO ruleDTO = new PeriodicChangeRuleDTO(
-                name, pcName, taName, null, intSum, type, intPass, localDate
+                name, pcName, taName, intSum, type, intPass, localDate, true, null
             );
             
             PeriodicChangeRule rule = periodicChangeRuleService.create(ruleDTO, chatId);
