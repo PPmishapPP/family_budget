@@ -6,11 +6,12 @@ public record PeriodicChangeRuleDTO(
     String name,
     String pcName,
     String taName,
-    String recName,
     int sum,
     String type,
     int pass,
-    LocalDate startDay
+    LocalDate startDay,
+	boolean isActive,
+    LocalDate endDate
 ) {
 
 }

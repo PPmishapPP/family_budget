@@ -15,6 +15,7 @@ import ru.mishapp.services.records.ApplyResult;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -55,6 +56,11 @@ public class AccountService {
 
         return new ApplyResult(targetAccountBalance, null);
     }
+
+    public List<Account> readAllAccounts() {
+        return StreamSupport.stream(accountRepository.findAll().spliterator(), false)
+                .toList();
+    }
     
     private AccountHistory createNext(AccountHistory last, int sum, String ruleName) {
         return AccountHistory.builder()
@@ -65,4 +71,5 @@ public class AccountService {
             .comment(ruleName)
             .build();
     }
+
 }

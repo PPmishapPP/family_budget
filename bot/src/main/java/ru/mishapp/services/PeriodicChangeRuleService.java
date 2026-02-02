@@ -13,6 +13,8 @@ import ru.mishapp.repository.PeriodicChangeRuleRepository;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +47,8 @@ public class PeriodicChangeRuleService {
         builder.sum(rule.sum());
         builder.pass(rule.pass());
         builder.nextDay(rule.startDay());
+        builder.active(rule.isActive());
+        builder.endDate(rule.endDate());
         
         return periodicChangeRuleRepository.save(builder.build());
     }
@@ -53,5 +57,10 @@ public class PeriodicChangeRuleService {
         return periodicChangeRepository.findByNameAndChatId(name, chatId)
             .map(PeriodicChange::getRules)
             .orElse(Set.of());
+    }
+
+    public Set<PeriodicChangeRule> readAll() {
+        return StreamSupport.stream(periodicChangeRuleRepository.findAll().spliterator(), false)
+                .collect(Collectors.toSet());
     }
 }
