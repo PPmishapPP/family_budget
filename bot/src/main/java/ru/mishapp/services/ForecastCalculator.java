@@ -2,9 +2,11 @@ package ru.mishapp.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.mishapp.dto.PeriodicChangeRuleDto;
 import ru.mishapp.entity.Account;
 import ru.mishapp.entity.AccountHistory;
 import ru.mishapp.entity.PeriodicChangeRule;
+import ru.mishapp.mapper.PeriodicChangeRuleMapper;
 import ru.mishapp.repository.AccountHistoryRepository;
 import ru.mishapp.repository.PeriodicChangeRepository;
 import ru.mishapp.services.records.CalcItem;
@@ -21,6 +23,7 @@ public class ForecastCalculator {
     
     private final PeriodicChangeRepository repository;
     private final AccountHistoryRepository accountHistoryRepository;
+    private final PeriodicChangeRuleMapper mapper;
     
     public List<CalcItem> calc(Account account, LocalDate to, Long chatId) {
         Map<LocalDate, List<PeriodicChangeRule>> map = repository.findAllByChatId(chatId).stream()
@@ -30,7 +33,20 @@ public class ForecastCalculator {
         
         AccountHistory last = accountHistoryRepository.findLast(account.getId());
         int balance = last.getBalance();
-        
+        return calc(map, balance, to);
+    }
+
+    public List<CalcItem> calc(List<PeriodicChangeRuleDto> dtos, long chatId, LocalDate to) {
+        List<PeriodicChangeRule> entityList = mapper.toEntityList(dtos, chatId);
+        Map<LocalDate, List<PeriodicChangeRule>> map = entityList.stream()
+                .filter(PeriodicChangeRule::isActive)
+                .collect(Collectors.groupingBy(PeriodicChangeRule::getNextDay));
+        AccountHistory last = accountHistoryRepository.findLast(entityList.getLast().getTargetAccountId());
+        int balance = last.getBalance();
+        return calc(map, balance, to);
+    }
+
+    private List<CalcItem> calc(Map<LocalDate, List<PeriodicChangeRule>> map, int balance, LocalDate to) {
         List<CalcItem> result = new ArrayList<>();
         for (LocalDate current = LocalDate.now(); !current.isAfter(to); current = current.plusDays(1)) {
             List<PeriodicChangeRule> periodicChangeRules = map.remove(current);

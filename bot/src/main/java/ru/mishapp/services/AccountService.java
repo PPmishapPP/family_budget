@@ -72,4 +72,7 @@ public class AccountService {
             .build();
     }
 
+    public List<Account> findAllByChatId(long chatId) {
+        return accountRepository.findAllByChatId(chatId);
+    }
 }

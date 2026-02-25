@@ -2,55 +2,30 @@ package ru.mishapp.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.mishapp.dto.PeriodicChangeRuleDTO;
-import ru.mishapp.entity.Account;
+import ru.mishapp.dto.PeriodicChangeRuleDto;
 import ru.mishapp.entity.PeriodicChange;
 import ru.mishapp.entity.PeriodicChangeRule;
-import ru.mishapp.enumiration.Type;
-import ru.mishapp.repository.AccountRepository;
+import ru.mishapp.mapper.PeriodicChangeRuleMapper;
 import ru.mishapp.repository.PeriodicChangeRepository;
 import ru.mishapp.repository.PeriodicChangeRuleRepository;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
 public class PeriodicChangeRuleService {
     
     private final PeriodicChangeRuleRepository periodicChangeRuleRepository;
-    private final AccountRepository accountRepository;
+    private final PeriodicChangeRuleMapper mapper;
     private final PeriodicChangeRepository periodicChangeRepository;
     
-    public PeriodicChangeRule create(PeriodicChangeRuleDTO rule, long chatId) {
-        PeriodicChangeRule.PeriodicChangeRuleBuilder builder = PeriodicChangeRule.builder();
-        Optional<Account> targetAccount = accountRepository.findByNameAndChatId(rule.taName(), chatId);
-        if (targetAccount.isEmpty()) {
-            throw new IllegalArgumentException("Не существует счёта с именем " + rule.taName());
-        }
-        builder.targetAccountId(targetAccount.get().getId());
-        
-        Optional<PeriodicChange> periodicChange = periodicChangeRepository.findByNameAndChatId(rule.pcName(), chatId);
-        if (periodicChange.isEmpty()) {
-            throw new IllegalArgumentException("Не существует периодического изменения " + rule.pcName());
-        }
-        builder.periodicChangeId(periodicChange.get().getId());
-        
-        Optional<Type> type = Type.of(rule.type());
-        if (type.isEmpty()) {
-            throw new IllegalArgumentException("Не существует типа правила " + rule.type());
-        }
-        builder.type(type.get());
-        builder.name(rule.name());
-        builder.sum(rule.sum());
-        builder.pass(rule.pass());
-        builder.nextDay(rule.startDay());
-        builder.active(rule.isActive());
-        builder.endDate(rule.endDate());
-        
-        return periodicChangeRuleRepository.save(builder.build());
+    public PeriodicChangeRule create(PeriodicChangeRuleDto dto, long chatId) {
+        return periodicChangeRuleRepository.save(mapper.toEntity(dto, chatId));
+    }
+
+    public void saveAll(List<PeriodicChangeRuleDto> dtos, long chatId) {
+        periodicChangeRuleRepository.saveAll(mapper.toEntityList(dtos, chatId));
     }
     
     public Set<PeriodicChangeRule> readAllByName(String name, Long chatId) {
@@ -59,8 +34,12 @@ public class PeriodicChangeRuleService {
             .orElse(Set.of());
     }
 
-    public Set<PeriodicChangeRule> readAll() {
-        return StreamSupport.stream(periodicChangeRuleRepository.findAll().spliterator(), false)
-                .collect(Collectors.toSet());
+    public List<PeriodicChangeRuleDto> findAllPeriodicChangeRuleDtos(long chatId) {
+        return periodicChangeRuleRepository.findAllRuleDtos(chatId);
+    }
+
+    public void deleteAll(List<PeriodicChangeRuleDto> dtos, long chatId) {
+        List<PeriodicChangeRule> entityList = mapper.toEntityList(dtos, chatId);
+        periodicChangeRuleRepository.deleteAllById(entityList.stream().map(PeriodicChangeRule::getId).toList());
     }
 }

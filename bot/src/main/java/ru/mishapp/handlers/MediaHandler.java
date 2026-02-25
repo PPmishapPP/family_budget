@@ -5,10 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import ru.mishapp.annotations.TelegramCommand;
 import ru.mishapp.annotations.TelegramHandler;
 import ru.mishapp.annotations.TelegramParam;
+import ru.mishapp.dto.MediaDto;
 import ru.mishapp.entity.Media;
 import ru.mishapp.services.MediaService;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @TelegramHandler("медиа")
 @RequiredArgsConstructor
@@ -28,28 +30,28 @@ public class MediaHandler {
 
 	@TelegramCommand("список")
 	public String getMedia(Long chatId) {
-		List<Media> mediaList = mediaService.getMediaByChatId(chatId);
-		StringBuilder builder = new StringBuilder();
-		for (Media media : mediaList) {
-			builder.append(media.getType().getName());
-			builder.append(" ");
-			builder.append("'");
-			builder.append(media.getName());
-			builder.append("'");
-			builder.append(" ");
-			builder.append("статус");
-			builder.append(" ");
-			builder.append(media.getStatus().getName());
-			if (media.getRating() != null) {
-				builder.append(" ");
-				builder.append(media.getRating());
-			}
-			if (media.getRating() != null) {
-				builder.append(" ");
-				builder.append(media.getDescription());
-			}
-			builder.append("\n\n");
-		}
-		return builder.toString();
+		List<MediaDto> mediaList = mediaService.getMediaByChatId(chatId);
+		List<String> collect = mediaList.stream()
+				.map(mediaItem ->
+						{
+							if (mediaItem.getRating() == null) {
+								return String.format("%s %s %s %s",
+										mediaItem.getType(),
+										mediaItem.getName(),
+										mediaItem.getStatus(),
+										mediaItem.getDescription());
+							} else {
+								return String.format("%s %s %s %s %s",
+										mediaItem.getType(),
+										mediaItem.getName(),
+										mediaItem.getStatus(),
+										mediaItem.getRating(),
+										mediaItem.getDescription());
+							}
+						}
+				)
+				.collect(Collectors.toList());
+
+		return String.join("\n", collect);
 	}
 }
