@@ -2,6 +2,7 @@ package ru.mishapp.entity;
 
 import jakarta.annotation.Nonnull;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 import ru.mishapp.enumiration.MediaStatus;
@@ -20,7 +21,8 @@ public class Media {
 	@Nonnull
 	private final MediaType type;
 
-	private final long chatId;
+	@Setter
+	private long chatId;
 
 	private final Integer rating;
 	private final String description;

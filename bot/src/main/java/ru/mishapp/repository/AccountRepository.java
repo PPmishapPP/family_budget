@@ -13,6 +13,7 @@ import java.util.Optional;
 
 public interface AccountRepository extends CrudRepository<Account, Long> {
     Optional<Account> findByNameAndChatId(String name, long chatId);
+    List<Account> findAllByChatId(long chatId);
 
     @Query("""
         select account.id, account.name, ah.balance from account

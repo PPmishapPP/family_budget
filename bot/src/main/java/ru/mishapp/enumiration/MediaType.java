@@ -17,7 +17,7 @@ public enum MediaType {
 
 	public static Optional<MediaType> of(String mediaType) {
 		for (MediaType type : values()) {
-			if (type.name.toLowerCase().equals(mediaType)) {
+			if (type.name.equals(mediaType)) {
 				return Optional.of(type);
 			}
 		}
