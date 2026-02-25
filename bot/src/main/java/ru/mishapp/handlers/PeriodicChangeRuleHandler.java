@@ -6,7 +6,7 @@ import ru.mishapp.Constants;
 import ru.mishapp.annotations.TelegramCommand;
 import ru.mishapp.annotations.TelegramHandler;
 import ru.mishapp.annotations.TelegramParam;
-import ru.mishapp.dto.PeriodicChangeRuleDTO;
+import ru.mishapp.dto.PeriodicChangeRuleDto;
 import ru.mishapp.entity.PeriodicChangeRule;
 import ru.mishapp.services.PeriodicChangeRuleService;
 
@@ -33,8 +33,8 @@ public class PeriodicChangeRuleHandler {
             int intSum = Integer.parseInt(sum);
             int intPass = Integer.parseInt(pass);
             LocalDate localDate = LocalDate.parse(startDay, Constants.DAY);
-            PeriodicChangeRuleDTO ruleDTO = new PeriodicChangeRuleDTO(
-                name, pcName, taName, intSum, type, intPass, localDate, true, null
+            PeriodicChangeRuleDto ruleDTO = new PeriodicChangeRuleDto(
+                null, name, pcName, taName, intSum, type, intPass, localDate, true, null
             );
             
             PeriodicChangeRule rule = periodicChangeRuleService.create(ruleDTO, chatId);
