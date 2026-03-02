@@ -195,7 +195,7 @@ public class PaymentsView extends VerticalLayout {
 	private EditableItem createEmptyEditableItem() {
 		// Создаем новый DTO с пустыми/дефолтными значениями
 		PeriodicChangeRuleDto emptyDto = new PeriodicChangeRuleDto(null, "", "", "",
-				0, null, 0, null, true, null);
+				0, Type.MONTHLY.toString(), 0, null, true, null);
 
 		// Создаем EditableItem с одинаковыми current и original (пустыми)
 		EditableItem editableItem = new EditableItem(emptyDto);
@@ -692,10 +692,10 @@ public class PaymentsView extends VerticalLayout {
 
 		// Перерисовываем все кнопки для обновления стилей
 		updateChatButtonsStyle();
-		updateButtonStates();
 
 		// Загружаем медиа для выбранного чата
 		loadDataForChat(chat.getChatId());
+		updateButtonStates();
 	}
 
 	private void updateChatButtonsStyle() {
