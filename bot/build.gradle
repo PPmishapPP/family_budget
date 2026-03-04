@@ -4,6 +4,14 @@ plugins {
     id 'com.vaadin' version "${vaadin}"
 }
 
+vaadin {
+    // Отключаем оптимизацию бандла для production (рекомендуется)
+    optimizeBundle = false
+
+    // Эти свойства будут переопределены через параметры командной строки
+    productionMode = false
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     implementation 'org.flywaydb:flyway-core'
@@ -36,6 +44,7 @@ tasks.named('test') {
 }
 
 jar {
+    dependsOn('vaadinBuildFrontend')
     manifest {
         attributes "Main-Class": "ru.mishapp.BotApp"
     }
