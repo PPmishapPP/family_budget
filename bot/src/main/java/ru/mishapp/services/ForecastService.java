@@ -44,25 +44,6 @@ public class ForecastService {
 		return new ListDto(result);
 	}
 
-	public ListDto forecastIncomeToTelegram(LocalDate to, Account account, Long chatId) {
-		List<IncomeDto> incomeDtos = forecastIncome(to, account, chatId);
-		List<String> messages = incomeDtos.stream()
-				.map(income -> {
-							if (income.increase() == null) {
-								return String.format("%s: %s₽",
-										income.date(),
-										income.balance());
-							} else {
-								return String.format("%s: %s₽ (+%s)",
-										income.date(),
-										income.balance(),
-										income.increase());
-							}
-						}
-				).toList();
-		return new ListDto(messages);
-	}
-
 	public List<IncomeDto> forecastIncome(LocalDate to, Account account, Long chatId) {
 		List<CalcItem> calcItems = forecastCalculator.calc(account, to, chatId);
 
@@ -105,5 +86,24 @@ public class ForecastService {
 
 			calcItems = calcItems.subList(minIndex + 1, calcItems.size());
 		}
+	}
+
+	public ListDto forecastIncomeToTelegram(LocalDate to, Account account, Long chatId) {
+		List<IncomeDto> incomeDtos = forecastIncome(to, account, chatId);
+		List<String> messages = incomeDtos.stream()
+				.map(income -> {
+							if (income.increase() == null) {
+								return String.format("%s: %s₽",
+										income.date(),
+										income.balance());
+							} else {
+								return String.format("%s: %s₽ (+%s)",
+										income.date(),
+										income.balance(),
+										income.increase());
+							}
+						}
+				).toList();
+		return new ListDto(messages);
 	}
 }
