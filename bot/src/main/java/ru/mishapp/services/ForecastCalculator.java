@@ -30,7 +30,6 @@ public class ForecastCalculator {
         Map<LocalDate, List<PeriodicChangeRule>> map = repository.findAllByChatId(chatId).stream()
                 .flatMap(periodicChange -> periodicChange.getRules().stream())
                 .filter(PeriodicChangeRule::isActive)
-                .sorted(Comparator.comparingInt(PeriodicChangeRule::getSum).reversed())
                 .collect(Collectors.groupingBy(PeriodicChangeRule::getNextDay));
         
         AccountHistory last = accountHistoryRepository.findLast(account.getId());
@@ -42,8 +41,13 @@ public class ForecastCalculator {
         List<PeriodicChangeRule> entityList = mapper.toEntityList(dtos, chatId);
         Map<LocalDate, List<PeriodicChangeRule>> map = entityList.stream()
                 .filter(PeriodicChangeRule::isActive)
-                .sorted(Comparator.comparingInt(PeriodicChangeRule::getSum).reversed())
-                .collect(Collectors.groupingBy(PeriodicChangeRule::getNextDay));
+                .collect(Collectors.groupingBy(PeriodicChangeRule::getNextDay,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                list -> list.stream()
+                                        .sorted(Comparator.comparingInt(PeriodicChangeRule::getSum).reversed())
+                                        .collect(Collectors.toList())
+                        )));
         AccountHistory last = accountHistoryRepository.findLast(entityList.getLast().getTargetAccountId());
         int balance = last.getBalance();
         return calc(map, balance, to);

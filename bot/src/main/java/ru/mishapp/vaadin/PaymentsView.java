@@ -229,7 +229,14 @@ public class PaymentsView extends VerticalLayout {
 		// Убираем стандартные колонки
 		grid.removeAllColumns();
 		// Колонка с названием
-		grid.addColumn(item -> String.valueOf(item.getCurrentDto().name()))
+		grid.addColumn(item ->
+		{
+			String name = item.getCurrentDto().name();
+			if (item.isModified() && !name.equals(item.originalDto.name())) {
+				name = "✎ " + name;
+			}
+			return name;
+		})
 				.setHeader("Название")
 				.setSortable(true)
 				.setAutoWidth(true)
@@ -239,21 +246,11 @@ public class PaymentsView extends VerticalLayout {
 					nameField.setValue(item.getCurrentDto().name());
 					nameField.setWidthFull();
 
-					// Редактируемо только для новых записей
-					nameField.setReadOnly(!item.isNew());
-
-					// Визуально показываем, что поле только для чтения
-					if (!item.isNew()) {
-						nameField.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
-					}
-
 					// Сохраняем изменения
 					nameField.addValueChangeListener(e -> {
-						if (!nameField.isReadOnly()) {
-							item.setCurrentName(e.getValue());
-							grid.getDataProvider().refreshItem(item);
-							updateButtonStates();
-						}
+						item.setCurrentName(e.getValue());
+						grid.getDataProvider().refreshItem(item);
+						updateButtonStates();
 					});
 
 					return nameField;
@@ -337,12 +334,18 @@ public class PaymentsView extends VerticalLayout {
 				.setFlexGrow(1)
 				.setEditorComponent(this::createNextDayEditor);
 
-		Checkbox activeCheckbox = new Checkbox();
-		grid.addComponentColumn(item -> new Span(item.currentDto.active() ? "Активно" : "Неактивно"))
+		grid.addComponentColumn(item -> {
+					boolean active = item.currentDto.active();
+					String flag = active ? "Активно" : "Неактивно";
+					if (item.isModified() && item.originalDto.active() != active) {
+						flag = "✎ " + flag;
+					}
+					return new Span(flag);
+				})
 				.setHeader("Активность")
 				.setAutoWidth(true)
 				.setFlexGrow(1)
-				.setEditorComponent(activeCheckbox);
+				.setEditorComponent(this::createActiveCheckBox);
 
 		grid.addColumn(item -> item.getCurrentDto().endDate())
 				.setHeader("Последний платеж")
@@ -402,6 +405,26 @@ public class PaymentsView extends VerticalLayout {
 			}
 			return "";
 		});
+	}
+
+	private Component createActiveCheckBox(EditableItem item) {
+		Checkbox activeCheckbox = new Checkbox();
+		// Устанавливаем текущее значение из элемента
+		activeCheckbox.setValue(item.currentDto.active());
+
+		// Добавляем слушатель для сохранения изменений
+		activeCheckbox.addValueChangeListener(event -> {
+			// Обновляем значение в DTO
+			item.setIsActive(event.getValue());
+
+			// Обновляем отображение в гриде
+			grid.getDataProvider().refreshItem(item);
+		});
+
+		// Опционально: делаем чекбокс доступным только в режиме редактирования
+		activeCheckbox.setEnabled(editMode); // если у вас есть такой флаг
+
+		return activeCheckbox;
 	}
 
 	private Component createPeriodicChangeNameEditor(EditableItem item) {
@@ -824,6 +847,11 @@ public class PaymentsView extends VerticalLayout {
 		public void setAccountName(String accountName) {
 			this.currentDto = currentDto.withTargetAccountName(accountName);
 			this.modified = !accountName.equals(originalDto.targetAccountName());
+		}
+
+		public void setIsActive(boolean isActive) {
+			this.currentDto = currentDto.withActive(isActive);
+			this.modified = isActive != originalDto.active();
 		}
 	}
 }
