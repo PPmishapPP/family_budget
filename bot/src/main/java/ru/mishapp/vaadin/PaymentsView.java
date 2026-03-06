@@ -642,9 +642,7 @@ public class PaymentsView extends VerticalLayout {
 		buttons.add(calculateButton);
 		calculateIncomeButton.setEnabled(selectedChat != null);
 		calculateIncomeButton.addClickListener(e ->
-				new IncomeView(service, items.stream()
-						.map(EditableItem::toDto)
-						.collect(Collectors.toList()),
+				new IncomeView(service, accountService,
 						selectedChat.getChatId()).open());
 		buttons.add(calculateIncomeButton);
 		return buttons;
@@ -673,6 +671,7 @@ public class PaymentsView extends VerticalLayout {
 		saveButton.setEnabled(hasChanges);
 		editButton.setEnabled(selectedChat != null && isNotEmpty(originalItems));
 		calculateButton.setEnabled(selectedChat != null && isNotEmpty(originalItems));
+		calculateIncomeButton.setEnabled(selectedChat != null && isNotEmpty(originalItems));
 	}
 
 	private void createChatButtonsPanel() {

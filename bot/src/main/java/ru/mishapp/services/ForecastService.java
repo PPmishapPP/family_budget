@@ -75,7 +75,7 @@ public class ForecastService {
 
 				} else {
 					result.add(new IncomeDto(income.day().format(DAY),
-							RUB.format(min), RUB.format((long) min - oldMin)));
+							RUB.format(min), "+" + RUB.format((long) min - oldMin)));
 				}
 				oldMin = min;
 			}
@@ -97,7 +97,7 @@ public class ForecastService {
 										income.date(),
 										income.balance());
 							} else {
-								return String.format("%s: %s₽ (+%s)",
+								return String.format("%s: %s₽ (%s)",
 										income.date(),
 										income.balance(),
 										income.increase());
