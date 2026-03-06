@@ -13,6 +13,7 @@ import ru.mishapp.services.records.CalcItem;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ public class ForecastCalculator {
         Map<LocalDate, List<PeriodicChangeRule>> map = repository.findAllByChatId(chatId).stream()
                 .flatMap(periodicChange -> periodicChange.getRules().stream())
                 .filter(PeriodicChangeRule::isActive)
+                .sorted(Comparator.comparingInt(PeriodicChangeRule::getSum).reversed())
                 .collect(Collectors.groupingBy(PeriodicChangeRule::getNextDay));
         
         AccountHistory last = accountHistoryRepository.findLast(account.getId());
@@ -40,6 +42,7 @@ public class ForecastCalculator {
         List<PeriodicChangeRule> entityList = mapper.toEntityList(dtos, chatId);
         Map<LocalDate, List<PeriodicChangeRule>> map = entityList.stream()
                 .filter(PeriodicChangeRule::isActive)
+                .sorted(Comparator.comparingInt(PeriodicChangeRule::getSum).reversed())
                 .collect(Collectors.groupingBy(PeriodicChangeRule::getNextDay));
         AccountHistory last = accountHistoryRepository.findLast(entityList.getLast().getTargetAccountId());
         int balance = last.getBalance();
