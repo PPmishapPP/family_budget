@@ -17,7 +17,10 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
+import ru.mishapp.dto.IncomeDto;
 import ru.mishapp.dto.PeriodicChangeRuleDto;
+import ru.mishapp.services.AccountService;
+import ru.mishapp.services.ForecastCalculator;
 import ru.mishapp.services.ForecastService;
 import ru.mishapp.services.records.CalcItem;
 
@@ -26,18 +29,18 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
-public class ForecastView extends Dialog {
+public class IncomeView  extends Dialog {
 
 	private final ForecastService service;
-	private final List<PeriodicChangeRuleDto> dtos;
-	private final Grid<CalcItem> resultsGrid = new Grid<>();
+	private final AccountService accountService;
+	private final Grid<IncomeDto> resultsGrid = new Grid<>();
 	private DatePicker datePicker;
 	private Button calculateButton;
 	private final long chatId;
 
-	public ForecastView(ForecastService service, List<PeriodicChangeRuleDto> dtos, long chatId) {
+	public IncomeView(ForecastService service, AccountService accountService, long chatId) {
 		this.service = service;
-		this.dtos = dtos;
+		this.accountService = accountService;
 		this.chatId = chatId;
 		initDialog();
 	}
@@ -73,7 +76,7 @@ public class ForecastView extends Dialog {
 		header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 		header.setAlignItems(FlexComponent.Alignment.CENTER);
 
-		H2 title = new H2("Расчет прогнозного баланса");
+		H2 title = new H2("Расчет прогнозного дохода");
 		title.getStyle()
 				.set("margin", "0");
 
@@ -150,29 +153,20 @@ public class ForecastView extends Dialog {
 		resultsGrid.removeAllColumns();
 
 		// Колонка с датой
-		resultsGrid.addColumn(item -> item.day().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")))
+		resultsGrid.addColumn(IncomeDto::date)
 				.setHeader("Дата")
 				.setSortable(true)
 				.setAutoWidth(true)
 				.setFlexGrow(1);
 
-		// Колонка с операцией
-		resultsGrid.addColumn(item -> item.rule().getName())
-				.setHeader("Операция")
-				.setSortable(true)
-				.setAutoWidth(true)
-				.setFlexGrow(1);
-
-		// Колонка с суммой операции
-		resultsGrid.addComponentColumn(item -> new Span(formatSum(item.rule().getSum())))
-				.setHeader("Сумма")
-				.setAutoWidth(true)
-				.setFlexGrow(1);
-
-		// Колонка с балансом
-		resultsGrid.addColumn(item -> formatBalance(item.balance()))
+		resultsGrid.addColumn(IncomeDto::balance)
 				.setHeader("Баланс")
 				.setSortable(true)
+				.setAutoWidth(true)
+				.setFlexGrow(1);
+
+		resultsGrid.addColumn(IncomeDto::increase)
+				.setHeader("Прибавка")
 				.setAutoWidth(true)
 				.setFlexGrow(1);
 
@@ -189,25 +183,16 @@ public class ForecastView extends Dialog {
 		return resultsGrid;
 	}
 
-	private String formatBalance(int balance) {
-		return String.format("%,d₽", balance).replace(',', ' ');
-	}
-
-	private String formatSum(int sum) {
-		String sign = sum < 0 ? "-" : "";
-		return String.format("%s%,d₽", sign, Math.abs(sum)).replace(',', ' ');
-	}
-
 	private Component createActionButtons() {
 		HorizontalLayout buttons = new HorizontalLayout();
 		buttons.setWidthFull();
 		buttons.setSpacing(true);
 
 		// Кнопка расчета
-		calculateButton = new Button("Рассчитать прогноз", VaadinIcon.CALC.create());
+		calculateButton = new Button("Рассчитать доход", VaadinIcon.CALC.create());
 		calculateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 		calculateButton.setEnabled(false);
-		calculateButton.addClickListener(e -> calculateForecast());
+		calculateButton.addClickListener(e -> calculateIncome());
 
 		// Кнопка отмены
 		Button cancelButton = new Button("Отмена", VaadinIcon.CLOSE.create());
@@ -224,7 +209,7 @@ public class ForecastView extends Dialog {
 		return buttons;
 	}
 
-	private void calculateForecast() {
+	private void calculateIncome() {
 		if (datePicker.getValue() == null) {
 			Notification.show("Выберите дату для расчета",
 					3000, Notification.Position.MIDDLE);
@@ -241,7 +226,7 @@ public class ForecastView extends Dialog {
 		UI.getCurrent().access(() -> {
 			try {
 				// Выполняем расчет
-				List<CalcItem> results = service.calculateForecast(dtos, chatId, targetDate);
+				List<IncomeDto> results = service.forecastIncome(targetDate, accountService.readByName("Безопасное место для денег", chatId), chatId);
 
 				loadingDialog.close();
 
@@ -277,7 +262,7 @@ public class ForecastView extends Dialog {
 		progressBar.setIndeterminate(true);
 		progressBar.setWidth("200px");
 
-		Span loadingText = new Span("Выполняется расчет прогноза...");
+		Span loadingText = new Span("Выполняется расчет дохода...");
 		loadingText.getStyle()
 				.set("font-weight", "bold")
 				.set("color", "var(--lumo-primary-text-color)");
@@ -293,7 +278,7 @@ public class ForecastView extends Dialog {
 		return dialog;
 	}
 
-	private void showResults(List<CalcItem> results, LocalDate targetDate) {
+	private void showResults(List<IncomeDto> results, LocalDate targetDate) {
 		// Обновляем заголовок диалога
 		setHeaderTitle(String.format("Прогноз до %s",
 				targetDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))));

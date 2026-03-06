@@ -42,7 +42,7 @@ public class ForecastHandler {
     ) {
         LocalDate day = LocalDate.parse(date, Constants.DAY);
         Account account = accountService.readByName(accountName, chatId);
-        ListDto listDto = forecastService.forecastIncome(day, account, chatId);
+        ListDto listDto = forecastService.forecastIncomeToTelegram(day, account, chatId);
         return listDto.toTelegram();
     }
 }

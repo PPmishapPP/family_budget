@@ -36,7 +36,7 @@ import ru.mishapp.entity.PeriodicChange;
 import ru.mishapp.enumiration.Type;
 import ru.mishapp.services.AccountService;
 import ru.mishapp.services.ChatService;
-import ru.mishapp.services.ForecastCalculator;
+import ru.mishapp.services.ForecastService;
 import ru.mishapp.services.PeriodicChangeRuleService;
 import ru.mishapp.services.PeriodicChangeService;
 
@@ -54,17 +54,19 @@ public class PaymentsView extends VerticalLayout {
 
 	private final PeriodicChangeRuleService periodicChangeRuleService;
 	private final ChatService chatService;
-	private final ForecastCalculator calculator;
+	private final ForecastService service;
 	private final PeriodicChangeService periodicChangeService;
 	private final AccountService accountService;
 
 	private final Binder<EditableItem> binder = new Binder<>(EditableItem.class);
 	private final List<PeriodicChangeRuleDto> itemsToDelete = new ArrayList<>();
-	private final Button calculateButton = new Button("Выполнить расчет дохода");
+	private final Button calculateButton = new Button("Выполнить прогноз платежей");
 	private final Button editButton = new Button("Режим редактирования");
 	private final Button cancelButton = new Button("Отменить изменения");
 	private final Button addButton = new Button("Добавить", new Icon(VaadinIcon.PLUS));
 	private final Button saveButton = new Button("Сохранить");
+	private final Button calculateIncomeButton = new Button("Расчет дохода");
+
 	// Текущий выбранный чат
 	private Chat selectedChat;
 	private Grid<EditableItem> grid;
@@ -631,13 +633,18 @@ public class PaymentsView extends VerticalLayout {
 		HorizontalLayout buttons = new HorizontalLayout();
 		buttons.setSpacing(true);
 		calculateButton.addClickListener(e ->
-				new ForecastView(calculator,
+				new ForecastView(service,
 						items.stream()
 								.map(EditableItem::toDto)
 								.collect(Collectors.toList()),
 						selectedChat.getChatId()).open());
 		calculateButton.setEnabled(selectedChat != null);
 		buttons.add(calculateButton);
+		calculateIncomeButton.setEnabled(selectedChat != null);
+		calculateIncomeButton.addClickListener(e ->
+				new IncomeView(service, accountService,
+						selectedChat.getChatId()).open());
+		buttons.add(calculateIncomeButton);
 		return buttons;
 	}
 
@@ -664,6 +671,7 @@ public class PaymentsView extends VerticalLayout {
 		saveButton.setEnabled(hasChanges);
 		editButton.setEnabled(selectedChat != null && isNotEmpty(originalItems));
 		calculateButton.setEnabled(selectedChat != null && isNotEmpty(originalItems));
+		calculateIncomeButton.setEnabled(selectedChat != null && isNotEmpty(originalItems));
 	}
 
 	private void createChatButtonsPanel() {
