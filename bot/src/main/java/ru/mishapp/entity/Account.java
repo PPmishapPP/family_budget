@@ -1,13 +1,14 @@
 package ru.mishapp.entity;
 
 import jakarta.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Table("account")
 @Getter
@@ -18,15 +19,15 @@ public class Account {
     private final String name;
     private final boolean status;
     private final long chatId;
-    @MappedCollection(idColumn = "account_id", keyColumn = "date_time")
-    private final List<AccountHistory> history;
+    @MappedCollection(idColumn = "account_id")
+    private final Set<AccountHistory> history;
     
     public Account(String name, boolean status, long chatId) {
-        this(null, name, status, chatId, new ArrayList<>());
+        this(null, name, status, chatId, new HashSet<>());
     }
     
     @PersistenceCreator
-    public Account(Long id, @Nonnull String name, boolean status, long chatId, List<AccountHistory> history) {
+    public Account(Long id, @Nonnull String name, boolean status, long chatId, Set<AccountHistory> history) {
         this.id = id;
         this.name = name;
         this.status = status;
@@ -35,11 +36,10 @@ public class Account {
     }
     
     public String toTelegram() {
-        StringBuilder message = new StringBuilder(String.format(
-            "Id: %d, Имя: %s(%d₽)%n%n", id, name, history.get(history.size() - 1).getBalance()));
+        StringBuilder message = new StringBuilder();
         
         for (AccountHistory accountHistory : history) {
-            message.append(accountHistory.toTelegram());
+            message.append(String.format("Id: %d, Имя: %s(%d₽)%n%n", id, name, accountHistory.getBalance()));
         }
         
         return message.toString();

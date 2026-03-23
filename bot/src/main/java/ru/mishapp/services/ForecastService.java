@@ -2,17 +2,13 @@ package ru.mishapp.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.mishapp.Constants;
 import ru.mishapp.dto.IncomeDto;
 import ru.mishapp.dto.ListDto;
 import ru.mishapp.dto.PeriodicChangeRuleDto;
-import ru.mishapp.entity.Account;
-import ru.mishapp.entity.PeriodicChangeRule;
 import ru.mishapp.services.records.CalcItem;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,26 +22,26 @@ public class ForecastService {
 	private final ForecastCalculator forecastCalculator;
 
 	public List<CalcItem> calculateForecast(List<PeriodicChangeRuleDto> dtos, long chatId, LocalDate to) {
-		return forecastCalculator.calc(dtos, chatId, to);
+		return forecastCalculator.calc(dtos, to);
 	}
 
-	public ListDto forecastTo(LocalDate to, Account account, Long chatId) {
-		List<String> result = forecastCalculator.calc(account, to, chatId)
+	public ListDto forecastTo(LocalDate to, String accountName, Long chatId) {
+		List<String> result = forecastCalculator.calc(accountName, to, chatId)
 				.stream()
 				.map(calcItem -> String.format(
 						"%s: %s₽ %s %s",
 						calcItem.day().format(DAY),
 						RUB.format(calcItem.balance()),
-						calcItem.rule().getName(),
-						RUB.format(calcItem.rule().getSum()))
+						calcItem.rule().name(),
+						RUB.format(calcItem.rule().sum()))
 				)
 				.collect(Collectors.toList());
 
 		return new ListDto(result);
 	}
 
-	public List<IncomeDto> forecastIncome(LocalDate to, Account account, Long chatId) {
-		List<CalcItem> calcItems = forecastCalculator.calc(account, to, chatId);
+	public List<IncomeDto> forecastIncome(LocalDate to, String accountName, Long chatId) {
+		List<CalcItem> calcItems = forecastCalculator.calc(accountName, to, chatId);
 
 		List<IncomeDto> result = new ArrayList<>();
 		int oldMin = -1;
@@ -88,8 +84,8 @@ public class ForecastService {
 		}
 	}
 
-	public ListDto forecastIncomeToTelegram(LocalDate to, Account account, Long chatId) {
-		List<IncomeDto> incomeDtos = forecastIncome(to, account, chatId);
+	public ListDto forecastIncomeToTelegram(LocalDate to, String accountName, Long chatId) {
+		List<IncomeDto> incomeDtos = forecastIncome(to, accountName, chatId);
 		List<String> messages = incomeDtos.stream()
 				.map(income -> {
 							if (income.increase() == null) {

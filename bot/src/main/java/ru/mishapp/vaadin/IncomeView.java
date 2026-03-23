@@ -18,11 +18,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import ru.mishapp.dto.IncomeDto;
-import ru.mishapp.dto.PeriodicChangeRuleDto;
-import ru.mishapp.services.AccountService;
-import ru.mishapp.services.ForecastCalculator;
 import ru.mishapp.services.ForecastService;
-import ru.mishapp.services.records.CalcItem;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -32,15 +28,13 @@ import java.util.Locale;
 public class IncomeView  extends Dialog {
 
 	private final ForecastService service;
-	private final AccountService accountService;
 	private final Grid<IncomeDto> resultsGrid = new Grid<>();
 	private DatePicker datePicker;
 	private Button calculateButton;
 	private final long chatId;
 
-	public IncomeView(ForecastService service, AccountService accountService, long chatId) {
+	public IncomeView(ForecastService service, long chatId) {
 		this.service = service;
-		this.accountService = accountService;
 		this.chatId = chatId;
 		initDialog();
 	}
@@ -226,7 +220,7 @@ public class IncomeView  extends Dialog {
 		UI.getCurrent().access(() -> {
 			try {
 				// Выполняем расчет
-				List<IncomeDto> results = service.forecastIncome(targetDate, accountService.readByName("Безопасное место для денег", chatId), chatId);
+				List<IncomeDto> results = service.forecastIncome(targetDate, "Безопасное место для денег", chatId);
 
 				loadingDialog.close();
 
