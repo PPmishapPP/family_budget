@@ -7,7 +7,6 @@ import ru.mishapp.annotations.TelegramCommand;
 import ru.mishapp.annotations.TelegramHandler;
 import ru.mishapp.annotations.TelegramParam;
 import ru.mishapp.dto.ListDto;
-import ru.mishapp.entity.Account;
 import ru.mishapp.services.AccountService;
 import ru.mishapp.services.ForecastService;
 
@@ -29,8 +28,7 @@ public class ForecastHandler {
         Long chatId
     ) {
         LocalDate day = LocalDate.parse(date, Constants.DAY);
-        Account account = accountService.readByName(accountName, chatId);
-        ListDto listDto = forecastService.forecastTo(day, account, chatId);
+        ListDto listDto = forecastService.forecastTo(day, accountName, chatId);
         return listDto.toTelegram();
     }
     
@@ -41,8 +39,7 @@ public class ForecastHandler {
         Long chatId
     ) {
         LocalDate day = LocalDate.parse(date, Constants.DAY);
-        Account account = accountService.readByName(accountName, chatId);
-        ListDto listDto = forecastService.forecastIncomeToTelegram(day, account, chatId);
+        ListDto listDto = forecastService.forecastIncomeToTelegram(day, accountName, chatId);
         return listDto.toTelegram();
     }
 }

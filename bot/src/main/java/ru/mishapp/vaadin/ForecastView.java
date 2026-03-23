@@ -157,14 +157,14 @@ public class ForecastView extends Dialog {
 				.setFlexGrow(1);
 
 		// Колонка с операцией
-		resultsGrid.addColumn(item -> item.rule().getName())
+		resultsGrid.addColumn(item -> item.rule().name())
 				.setHeader("Операция")
 				.setSortable(true)
 				.setAutoWidth(true)
 				.setFlexGrow(1);
 
 		// Колонка с суммой операции
-		resultsGrid.addComponentColumn(item -> new Span(formatSum(item.rule().getSum())))
+		resultsGrid.addComponentColumn(item -> new Span(formatSum(item.rule().sum())))
 				.setHeader("Сумма")
 				.setAutoWidth(true)
 				.setFlexGrow(1);

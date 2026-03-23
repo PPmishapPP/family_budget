@@ -8,31 +8,26 @@ import ru.mishapp.entity.PeriodicChange;
 import ru.mishapp.entity.PeriodicChangeRule;
 import ru.mishapp.enumiration.Type;
 import ru.mishapp.repository.AccountRepository;
-import ru.mishapp.repository.PeriodicChangeRepository;
+import ru.mishapp.services.PeriodicChangeService;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 public class PeriodicChangeRuleMapper {
 
 	private final AccountRepository accountRepository;
-	private final PeriodicChangeRepository periodicChangeRepository;
+	private final PeriodicChangeService periodicChangeService;
 
-	public PeriodicChangeRule toEntity(PeriodicChangeRuleDto dto, long chatId) {
+	public PeriodicChangeRule toEntity(PeriodicChangeRuleDto dto, Account account, Map<String, PeriodicChange> periodicChangeMap) {
 		PeriodicChangeRule.PeriodicChangeRuleBuilder builder = PeriodicChangeRule.builder();
-		Optional<Account> targetAccount = accountRepository.findByNameAndChatId(dto.targetAccountName(), chatId);
-		if (targetAccount.isEmpty()) {
-			throw new IllegalArgumentException("Не существует счёта с именем " + dto.targetAccountName());
-		}
-		builder.targetAccountId(targetAccount.get().getId());
+		builder.targetAccountId(account.getId());
 
-		Optional<PeriodicChange> periodicChange = periodicChangeRepository.findByNameAndChatId(dto.periodicChangeName(), chatId);
-		if (periodicChange.isEmpty()) {
+		if (!periodicChangeMap.containsKey(dto.periodicChangeName())) {
 			throw new IllegalArgumentException("Не существует периодического изменения " + dto.periodicChangeName());
 		}
-		builder.periodicChangeId(periodicChange.get().getId());
+		builder.periodicChangeId(periodicChangeMap.get(dto.periodicChangeName()).getId());
 
 		Type type = Type.valueOf(dto.type());
 		builder.id(dto.id());
@@ -47,8 +42,12 @@ public class PeriodicChangeRuleMapper {
 	}
 
 	public List<PeriodicChangeRule> toEntityList(List<PeriodicChangeRuleDto> dtos, long chatId) {
+		Account account = accountRepository.findByNameAndChatId("Безопасное место для денег", chatId).orElseThrow(
+				() -> new IllegalArgumentException("Не существует счёта с именем 'Безопасное место для денег'")
+		);
+		Map<String, PeriodicChange> periodicChangeMap = periodicChangeService.findAll(chatId);
 		return dtos.stream()
-				.map(dto -> toEntity(dto, chatId))
+				.map(dto -> toEntity(dto, account, periodicChangeMap))
 				.toList();
 	}
 }

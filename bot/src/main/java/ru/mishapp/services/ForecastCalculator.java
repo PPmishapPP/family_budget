@@ -3,12 +3,10 @@ package ru.mishapp.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.mishapp.dto.PeriodicChangeRuleDto;
-import ru.mishapp.entity.Account;
 import ru.mishapp.entity.AccountHistory;
-import ru.mishapp.entity.PeriodicChangeRule;
-import ru.mishapp.mapper.PeriodicChangeRuleMapper;
+import ru.mishapp.enumiration.Type;
 import ru.mishapp.repository.AccountHistoryRepository;
-import ru.mishapp.repository.PeriodicChangeRepository;
+import ru.mishapp.repository.PeriodicChangeRuleRepository;
 import ru.mishapp.services.records.CalcItem;
 
 import java.time.LocalDate;
@@ -21,46 +19,44 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class ForecastCalculator {
-    
-    private final PeriodicChangeRepository repository;
+
+    private final PeriodicChangeRuleRepository periodicChangeRuleRepository;
     private final AccountHistoryRepository accountHistoryRepository;
-    private final PeriodicChangeRuleMapper mapper;
     
-    public List<CalcItem> calc(Account account, LocalDate to, Long chatId) {
-        Map<LocalDate, List<PeriodicChangeRule>> map = repository.findAllByChatId(chatId).stream()
-                .flatMap(periodicChange -> periodicChange.getRules().stream())
-                .filter(PeriodicChangeRule::isActive)
-                .collect(Collectors.groupingBy(PeriodicChangeRule::getNextDay));
-        
-        AccountHistory last = accountHistoryRepository.findLast(account.getId());
+    public List<CalcItem> calc(String accountName, LocalDate to, Long chatId) {
+        Map<LocalDate, List<PeriodicChangeRuleDto>> map = periodicChangeRuleRepository.findAllRuleDtos(chatId).stream()
+                .filter(PeriodicChangeRuleDto::active)
+                .collect(Collectors.groupingBy(PeriodicChangeRuleDto::nextDay));
+
+        AccountHistory last = accountHistoryRepository.findLastByAccountName(accountName);
         int balance = last.getBalance();
         return calc(map, balance, to);
     }
 
-    public List<CalcItem> calc(List<PeriodicChangeRuleDto> dtos, long chatId, LocalDate to) {
-        List<PeriodicChangeRule> entityList = mapper.toEntityList(dtos, chatId);
-        Map<LocalDate, List<PeriodicChangeRule>> map = entityList.stream()
-                .filter(PeriodicChangeRule::isActive)
-                .collect(Collectors.groupingBy(PeriodicChangeRule::getNextDay));
-        AccountHistory last = accountHistoryRepository.findLast(entityList.getLast().getTargetAccountId());
+    public List<CalcItem> calc(List<PeriodicChangeRuleDto> dtos, LocalDate to) {
+        Map<LocalDate, List<PeriodicChangeRuleDto>> map = dtos.stream()
+                .filter(PeriodicChangeRuleDto::active)
+                .collect(Collectors.groupingBy(PeriodicChangeRuleDto::nextDay));
+        AccountHistory last = accountHistoryRepository.findLastByAccountName(dtos.getLast().targetAccountName());
         int balance = last.getBalance();
         return calc(map, balance, to);
     }
 
-    private List<CalcItem> calc(Map<LocalDate, List<PeriodicChangeRule>> map, int balance, LocalDate to) {
+    private List<CalcItem> calc(Map<LocalDate, List<PeriodicChangeRuleDto>> map, int balance, LocalDate to) {
         List<CalcItem> result = new ArrayList<>();
         for (LocalDate current = LocalDate.now(); !current.isAfter(to); current = current.plusDays(1)) {
-            List<PeriodicChangeRule> periodicChangeRules = map.remove(current);
+            List<PeriodicChangeRuleDto> periodicChangeRules = map.remove(current);
             if (periodicChangeRules != null) {
-                periodicChangeRules.sort(Comparator.comparingInt(PeriodicChangeRule::getSum).reversed());
-                for (PeriodicChangeRule rule : periodicChangeRules) {
-                    balance = balance + rule.getSum();
+                periodicChangeRules.sort(Comparator.comparingInt(PeriodicChangeRuleDto::sum).reversed());
+                for (PeriodicChangeRuleDto rule : periodicChangeRules) {
+                    balance = balance + rule.sum();
                     result.add(new CalcItem(current, balance, rule));
-                    LocalDate nextDay = rule.getType().next(rule.getNextDay(), rule.getPass());
-                    if (nextDay == null || (rule.getEndDate() != null && nextDay.isAfter(rule.getEndDate()))) {
+                    Type type = Type.valueOf(rule.type());
+                    LocalDate nextDay = type.next(rule.nextDay(), rule.pass());
+                    if (nextDay == null || (rule.endDate() != null && nextDay.isAfter(rule.endDate()))) {
                         continue;
                     }
-                    PeriodicChangeRule nextRule = rule.withNextDay(nextDay);
+                    PeriodicChangeRuleDto nextRule = rule.withNextDay(nextDay);
                     map.computeIfAbsent(nextDay, day -> new ArrayList<>()).add(nextRule);
                 }
             }

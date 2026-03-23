@@ -642,7 +642,7 @@ public class PaymentsView extends VerticalLayout {
 		buttons.add(calculateButton);
 		calculateIncomeButton.setEnabled(selectedChat != null);
 		calculateIncomeButton.addClickListener(e ->
-				new IncomeView(service, accountService,
+				new IncomeView(service,
 						selectedChat.getChatId()).open());
 		buttons.add(calculateIncomeButton);
 		return buttons;
