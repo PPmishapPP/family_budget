@@ -40,7 +40,6 @@ import ru.mishapp.services.PeriodicChangeRuleService;
 import ru.mishapp.services.PeriodicChangeService;
 import ru.mishapp.services.RuleExecuteService;
 
-import java.awt.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -49,6 +48,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
+import static ru.mishapp.Constants.RUB;
 
 @RequiredArgsConstructor
 @Route(value = "payments", layout = MainLayout.class)
@@ -77,7 +77,7 @@ public class PaymentsView extends VerticalLayout {
 	private List<EditableItem> items = new ArrayList<>();
 	private List<EditableItem> originalItems = new ArrayList<>();
 	private boolean editMode = false;
-	private Label balanceLabel;
+	private Span balanceSpan;
 
 	@PostConstruct
 	public void configure() {
@@ -126,10 +126,20 @@ public class PaymentsView extends VerticalLayout {
 		toolbar.setWidthFull();
 		toolbar.setJustifyContentMode(JustifyContentMode.END);
 		toolbar.setAlignItems(Alignment.END);
-		if (selectedChat != null) {
-			AccountHistory lastTarget = accountService.findLastHistoryByAccountName("Безопасное место для денег");
-			toolbar.add(new Span("Текущий баланс: " + lastTarget.getBalance()));
-		}
+
+		// Контейнер для левой части (с балансом)
+		HorizontalLayout leftSection = new HorizontalLayout();
+		leftSection.setAlignItems(Alignment.CENTER);
+		leftSection.setSpacing(true);
+		leftSection.getStyle().set("margin-right", "auto");
+
+		// Текст
+		Span balanceIcon = new Span("💰 ");
+
+		balanceSpan = new Span("Здесь будет баланс");
+		balanceSpan.getStyle().set("color", "var(--lumo-secondary-text-color)");
+
+		leftSection.add(balanceIcon, balanceSpan);
 
 		// Кнопка переключения режима редактирования
 		editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -147,8 +157,19 @@ public class PaymentsView extends VerticalLayout {
 		saveButton.addClickListener(e -> save());
 		saveButton.setEnabled(false);
 
-		toolbar.add(editButton, cancelButton, addButton, saveButton);
+		toolbar.add(leftSection, editButton, cancelButton, addButton, saveButton);
 		add(toolbar);
+	}
+
+	public void updateBalance() {
+		if (selectedChat != null) {
+			AccountHistory lastTarget = accountService.findLastHistoryByAccountName("Безопасное место для денег");
+			if (lastTarget != null) {
+				balanceSpan.setText("Текущий баланс: " + RUB.format(lastTarget.getBalance()) + " ₽");
+			} else {
+				balanceSpan.setText("Текущий баланс: 0 ₽");
+			}
+		}
 	}
 
 	private void toggleEditMode() {
@@ -674,6 +695,7 @@ public class PaymentsView extends VerticalLayout {
 		executeService.ruleExecute(item.getOriginalDto(), selectedChat.getChatId());
 		// После сохранения обновляем оригинальные значения
 		loadDataForChat(selectedChat.getChatId());
+		updateBalance();
 	}
 
 //	private void setupFieldNavigation(Component field, Runnable onEnter) {
@@ -896,6 +918,7 @@ public class PaymentsView extends VerticalLayout {
 		// Загружаем медиа для выбранного чата
 		loadDataForChat(chat.getChatId());
 		updateButtonStates();
+		updateBalance();
 	}
 
 	private void updateChatButtonsStyle() {
