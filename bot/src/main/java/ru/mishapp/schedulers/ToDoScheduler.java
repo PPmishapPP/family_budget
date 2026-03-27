@@ -1,23 +1,22 @@
 package ru.mishapp.schedulers;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.mishapp.IBot;
 import ru.mishapp.entity.ToDoItem;
 import ru.mishapp.repository.ToDoItemRepository;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
 public class ToDoScheduler {
     
     private final ToDoItemRepository repository;
-    private final IBot bot;
     
     @Scheduled(cron = "${schedule.todo-reminder}")
     @Transactional
@@ -34,7 +33,6 @@ public class ToDoScheduler {
                 builder.append(") ");
                 builder.append(item.toTelegram());
             }
-            bot.sendMessage(builder.toString(), chatId);
         }
     }
 }

@@ -2,8 +2,6 @@ package ru.mishapp.vaadin;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.Key;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -31,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import ru.mishapp.dto.PeriodicChangeRuleDto;
 import ru.mishapp.entity.Account;
+import ru.mishapp.entity.AccountHistory;
 import ru.mishapp.entity.Chat;
 import ru.mishapp.entity.PeriodicChange;
 import ru.mishapp.enumiration.Type;
@@ -39,9 +38,12 @@ import ru.mishapp.services.ChatService;
 import ru.mishapp.services.ForecastService;
 import ru.mishapp.services.PeriodicChangeRuleService;
 import ru.mishapp.services.PeriodicChangeService;
+import ru.mishapp.services.RuleExecuteService;
 
+import java.awt.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -57,6 +59,7 @@ public class PaymentsView extends VerticalLayout {
 	private final ForecastService service;
 	private final PeriodicChangeService periodicChangeService;
 	private final AccountService accountService;
+	private final RuleExecuteService executeService;
 
 	private final Binder<EditableItem> binder = new Binder<>(EditableItem.class);
 	private final List<PeriodicChangeRuleDto> itemsToDelete = new ArrayList<>();
@@ -74,6 +77,7 @@ public class PaymentsView extends VerticalLayout {
 	private List<EditableItem> items = new ArrayList<>();
 	private List<EditableItem> originalItems = new ArrayList<>();
 	private boolean editMode = false;
+	private Label balanceLabel;
 
 	@PostConstruct
 	public void configure() {
@@ -95,6 +99,17 @@ public class PaymentsView extends VerticalLayout {
 						"';" +
 						"document.head.appendChild(style);"
 		);
+
+		getElement().executeJs(
+				"const style = document.createElement('style');" +
+						"style.textContent = '" +
+						"vaadin-grid::part(payment-due-row) { " +
+						"  background-color: var(--lumo-success-color-50pct) !important; " +
+						"  opacity: 0.8; " +
+						"}" +
+						"';" +
+						"document.head.appendChild(style);"
+		);
 	}
 
 	private void configureHeader() {
@@ -111,6 +126,10 @@ public class PaymentsView extends VerticalLayout {
 		toolbar.setWidthFull();
 		toolbar.setJustifyContentMode(JustifyContentMode.END);
 		toolbar.setAlignItems(Alignment.END);
+		if (selectedChat != null) {
+			AccountHistory lastTarget = accountService.findLastHistoryByAccountName("Безопасное место для денег");
+			toolbar.add(new Span("Текущий баланс: " + lastTarget.getBalance()));
+		}
 
 		// Кнопка переключения режима редактирования
 		editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -161,21 +180,6 @@ public class PaymentsView extends VerticalLayout {
 
 		// Обновляем доступность редакторов
 		grid.getDataProvider().refreshAll();
-	}
-
-	private void deleteEntity(EditableItem item) {
-		if (item.isNew()) {
-			// Просто удаляем из списка, в БД еще нет
-			items.remove(item);
-		} else {
-			// Помечаем на удаление или удаляем сразу
-			// Например, добавляем в список на удаление
-			itemsToDelete.add(item.getOriginalDto());
-			item.setMarkedForDeletion(true);
-		}
-		grid.setItems(items);
-		grid.getDataProvider().refreshAll();
-		updateButtonStates();
 	}
 
 	private void addNewRow() {
@@ -251,6 +255,7 @@ public class PaymentsView extends VerticalLayout {
 						item.setCurrentName(e.getValue());
 						grid.getDataProvider().refreshItem(item);
 						updateButtonStates();
+						grid.getEditor().editItem(item);
 					});
 
 					return nameField;
@@ -290,7 +295,6 @@ public class PaymentsView extends VerticalLayout {
 					sumField.setMin(0);
 					sumField.setWidthFull();
 					sumField.setEnabled(editMode); // Только в режиме редактирования
-
 					// Сохраняем изменение при потере фокуса
 					sumField.addBlurListener(e -> {
 						Integer newValue = sumField.getValue();
@@ -301,14 +305,13 @@ public class PaymentsView extends VerticalLayout {
 						}
 					});
 
-					// Сохраняем по Enter
-					sumField.addKeyPressListener(Key.ENTER, e -> {
+					sumField.addValueChangeListener(e -> {
 						Integer newValue = sumField.getValue();
 						if (newValue != null) {
 							item.setCurrentSum(newValue);
 							grid.getDataProvider().refreshItem(item);
 							updateButtonStates();
-							grid.getEditor().cancel();
+							grid.getEditor().editItem(item);
 						}
 					});
 
@@ -359,7 +362,7 @@ public class PaymentsView extends VerticalLayout {
 				GridVariant.LUMO_COLUMN_BORDERS);
 
 
-		// Включаем редактирование по двойному клику
+//		// Включаем редактирование по двойному клику
 		grid.addItemClickListener(event -> {
 			if (editMode && event.getColumn() != null) {
 				grid.getEditor().editItem(event.getItem());
@@ -367,6 +370,9 @@ public class PaymentsView extends VerticalLayout {
 		});
 
 		grid.addComponentColumn(item -> {
+					HorizontalLayout actionsLayout = new HorizontalLayout();
+					actionsLayout.setSpacing(true);
+					actionsLayout.setPadding(false);
 					Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
 					deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR,
 							ButtonVariant.LUMO_SMALL);
@@ -393,17 +399,38 @@ public class PaymentsView extends VerticalLayout {
 
 						dialog.open();
 					});
-					return deleteButton;
+
+					// Кнопка "Выполнить"
+					Button executeButton = new Button(new Icon(VaadinIcon.PLAY));
+					executeButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_SMALL);
+					executeButton.setTooltipText("Выполнить");
+
+					if (editMode || item.isMarkedForDeletion() || item.isNew()) {
+						executeButton.setEnabled(false);
+					}
+
+					executeButton.addClickListener(e -> {
+						executePayment(item); // Ваш метод выполнения платежа
+					});
+
+					actionsLayout.add(deleteButton, executeButton);
+					return actionsLayout;
 				})
 				.setHeader("Действия")
 				.setAutoWidth(true)
-				.setFlexGrow(1);
+				.setFlexGrow(0);
 
 		grid.setPartNameGenerator(item -> {
 			if (item.isMarkedForDeletion()) {
 				return "marked-for-deletion";
 			}
-			return "";
+
+			LocalDate nextDay = item.getCurrentDto().nextDay();
+			LocalDate today = LocalDate.now();
+			if (nextDay != null && !nextDay.isAfter(today)) {
+				return "payment-due-row";
+			}
+			return null;
 		});
 	}
 
@@ -411,7 +438,6 @@ public class PaymentsView extends VerticalLayout {
 		Checkbox activeCheckbox = new Checkbox();
 		// Устанавливаем текущее значение из элемента
 		activeCheckbox.setValue(item.currentDto.active());
-
 		// Добавляем слушатель для сохранения изменений
 		activeCheckbox.addValueChangeListener(event -> {
 			// Обновляем значение в DTO
@@ -419,8 +445,8 @@ public class PaymentsView extends VerticalLayout {
 
 			// Обновляем отображение в гриде
 			grid.getDataProvider().refreshItem(item);
+			grid.getEditor().editItem(item);
 		});
-
 		// Опционально: делаем чекбокс доступным только в режиме редактирования
 		activeCheckbox.setEnabled(editMode); // если у вас есть такой флаг
 
@@ -429,7 +455,6 @@ public class PaymentsView extends VerticalLayout {
 
 	private Component createPeriodicChangeNameEditor(EditableItem item) {
 		ComboBox<PeriodicChange> comboBox = new ComboBox<>();
-
 		// Загружаем данные из сервиса
 		List<PeriodicChange> categories = periodicChangeService.readAll(selectedChat.getChatId());
 		comboBox.setItems(categories);
@@ -438,6 +463,14 @@ public class PaymentsView extends VerticalLayout {
 		comboBox.setItemLabelGenerator(PeriodicChange::getName);
 		comboBox.setPlaceholder("Выберите категорию");
 		comboBox.setWidthFull();
+
+		if (editMode) {
+			comboBox.addFocusListener(e -> {
+				if (editMode && !comboBox.isOpened()) {
+					comboBox.setOpened(true);
+				}
+			});
+		}
 
 		// Устанавливаем текущее значение
 		if (item.getCurrentDto().periodicChangeName() != null) {
@@ -463,6 +496,7 @@ public class PaymentsView extends VerticalLayout {
 				item.setCurrentPeriodicChangeName(selected.getName());
 				grid.getDataProvider().refreshItem(item);
 				updateButtonStates();
+				grid.getEditor().editItem(item);
 			}
 		});
 
@@ -491,6 +525,13 @@ public class PaymentsView extends VerticalLayout {
 
 		// Редактируемо только для новых записей
 		comboBox.setReadOnly(!item.isNew());
+		if (editMode) {
+			comboBox.addFocusListener(e -> {
+				if (editMode && !comboBox.isOpened()) {
+					comboBox.setOpened(true);
+				}
+			});
+		}
 
 		// Визуально показываем, что поле только для чтения
 		if (!item.isNew()) {
@@ -505,6 +546,7 @@ public class PaymentsView extends VerticalLayout {
 				item.setAccountName(selected.getName());
 				grid.getDataProvider().refreshItem(item);
 				updateButtonStates();
+				grid.getEditor().editItem(item);
 			}
 		});
 
@@ -512,31 +554,33 @@ public class PaymentsView extends VerticalLayout {
 	}
 
 	private ComboBox<Type> createTypeEditor(EditableItem item) {
-		ComboBox<Type> combo = new ComboBox<>();
-		combo.setItems(Type.values());
-		combo.setItemLabelGenerator(Type::getDescription);
-		combo.setValue(Type.valueOf(item.currentDto.type()));
-		combo.setWidthFull();
-		combo.addValueChangeListener(e -> {
+		ComboBox<Type> comboBox = new ComboBox<>();
+		comboBox.setItems(Type.values());
+		comboBox.setItemLabelGenerator(Type::getDescription);
+		comboBox.setValue(Type.valueOf(item.currentDto.type()));
+		comboBox.setWidthFull();
+
+		if (editMode) {
+			comboBox.addFocusListener(e -> {
+				if (editMode && !comboBox.isOpened()) {
+					comboBox.setOpened(true);
+				}
+			});
+		}
+
+		comboBox.addValueChangeListener(e -> {
 			if (e.isFromClient() && e.getValue() != null) {
 				Type newType = e.getValue();
 				if (!newType.name().equals(item.currentDto.type())) {
 					item.setCurrentType(newType.name());
 					grid.getDataProvider().refreshItem(item);
 					updateButtonStates();
-
-					// Автоматически закрываем редактор после выбора
-					UI.getCurrent().access(() -> {
-						grid.getEditor().cancel();
-					});
+					grid.getEditor().editItem(item);
 				}
 			}
 		});
-		// Закрытие по клику вне или Escape
-		combo.addBlurListener(e -> {
-			grid.getEditor().cancel();
-		});
-		return combo;
+
+		return comboBox;
 	}
 
 	private DatePicker createNextDayEditor(EditableItem item) {
@@ -567,18 +611,9 @@ public class PaymentsView extends VerticalLayout {
 					item.setNextDay(newDate);
 					grid.getDataProvider().refreshItem(item);
 					updateButtonStates();
-
-					// Автоматически закрываем редактор после выбора
-					UI.getCurrent().access(() -> {
-						grid.getEditor().cancel();
-					});
+					grid.getEditor().editItem(item);
 				}
 			}
-		});
-
-		// Закрытие редактора
-		datePicker.addBlurListener(e -> {
-			grid.getEditor().cancel();
 		});
 
 		return datePicker;
@@ -612,22 +647,156 @@ public class PaymentsView extends VerticalLayout {
 					item.setEndDate(newDate);
 					grid.getDataProvider().refreshItem(item);
 					updateButtonStates();
-
-					// Автоматически закрываем редактор после выбора
-					UI.getCurrent().access(() -> {
-						grid.getEditor().cancel();
-					});
+					grid.getEditor().editItem(item);
 				}
 			}
 		});
 
-		// Закрытие редактора
-		datePicker.addBlurListener(e -> {
-			grid.getEditor().cancel();
-		});
-
 		return datePicker;
 	}
+
+	private void deleteEntity(EditableItem item) {
+		if (item.isNew()) {
+			// Просто удаляем из списка, в БД еще нет
+			items.remove(item);
+		} else {
+			// Помечаем на удаление или удаляем сразу
+			// Например, добавляем в список на удаление
+			itemsToDelete.add(item.getOriginalDto());
+			item.setMarkedForDeletion(true);
+		}
+		grid.setItems(items);
+		grid.getDataProvider().refreshAll();
+		updateButtonStates();
+	}
+
+	private void executePayment(EditableItem item) {
+		executeService.ruleExecute(item.getOriginalDto(), selectedChat.getChatId());
+		// После сохранения обновляем оригинальные значения
+		loadDataForChat(selectedChat.getChatId());
+	}
+
+//	private void setupFieldNavigation(Component field, Runnable onEnter) {
+//		// Enter для перехода к следующему полю
+//		field.getElement().addEventListener("keydown", e -> {
+//			String key = e.getEventData().getString("event.key");
+//			boolean ctrlKey = e.getEventData().getBoolean("event.ctrlKey");
+//
+//			if ("Enter".equals(key) && !ctrlKey) {
+//				// Предотвращаем стандартное поведение через JavaScript
+//				e.getSource().executeJs("event.preventDefault();");
+//
+//				navigateToNextField(field);
+//				if (onEnter != null) onEnter.run();
+//			}
+//		}).addEventData("event.key").addEventData("event.ctrlKey");
+//	}
+//
+//	// Метод навигации
+//	private void navigateToNextField(Component currentField) {
+//		UI.getCurrent().getPage().executeJs("""
+//        const current = $0;
+//        const editingCell = current.closest('vaadin-grid-cell[editing]');
+//        if (editingCell) {
+//            const row = editingCell.closest('vaadin-grid-row');
+//            const editableCells = Array.from(row.querySelectorAll('vaadin-grid-cell[editing]'));
+//            const currentIndex = editableCells.indexOf(editingCell);
+//            const nextCell = editableCells[currentIndex + 1];
+//            if (nextCell) {
+//                const nextInput = nextCell.querySelector('input, vaadin-combo-box, vaadin-select, textarea');
+//                if (nextInput) {
+//                    nextInput.focus();
+//                    if (nextInput.tagName === 'INPUT' || nextInput.tagName === 'TEXTAREA') {
+//                        nextInput.select();
+//                    }
+//                }
+//            }
+//            // НЕ ЗАКРЫВАЕМ РЕДАКТОР, если это последняя ячейка
+//        }
+//    """, currentField.getElement());
+//	}
+//
+//	// Навигация по Tab
+//	private void setupTabNavigation() {
+//		UI.getCurrent().getPage().executeJs("""
+//        let currentEditingRow = null;
+//
+//        function getEditableCells(row) {
+//            return Array.from(row.querySelectorAll('vaadin-grid-cell[editing]'));
+//        }
+//
+//        function focusNextCell(currentCell, direction) {
+//            const row = currentCell.closest('vaadin-grid-row');
+//            if (!row) return false;
+//
+//            const cells = getEditableCells(row);
+//            const currentIndex = cells.indexOf(currentCell);
+//            let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+//
+//            if (nextIndex >= 0 && nextIndex < cells.length) {
+//                const nextCell = cells[nextIndex];
+//                const input = nextCell.querySelector('input, vaadin-combo-box, vaadin-select, textarea');
+//                if (input) {
+//                    input.focus();
+//                    if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') {
+//                        input.select();
+//                    }
+//                    return true;
+//                }
+//            }
+//            return false;
+//        }
+//
+//        document.addEventListener('keydown', function(e) {
+//            const activeElement = document.activeElement;
+//            const editingCell = activeElement.closest('vaadin-grid-cell[editing]');
+//
+//            if (!editingCell) return;
+//
+//            if (e.key === 'Tab') {
+//                e.preventDefault();
+//                const direction = e.shiftKey ? 'prev' : 'next';
+//                const moved = focusNextCell(editingCell, direction);
+//
+//                // Если не удалось перейти к следующей ячейке и это не последняя
+//                if (!moved && direction === 'next') {
+//                    // Можно добавить сохранение или просто оставить фокус
+//                    console.log('Last cell reached');
+//                }
+//            }
+//
+//            if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
+//                e.preventDefault();
+//                const moved = focusNextCell(editingCell, 'next');
+//                if (!moved) {
+//                    // Если это последняя ячейка, не закрываем редактор
+//                    // Просто оставляем фокус
+//                    console.log('Last cell - staying in editor');
+//                }
+//            }
+//        });
+//
+//        // Следим за открытием редактора
+//        const observer = new MutationObserver(function(mutations) {
+//            mutations.forEach(function(mutation) {
+//                if (mutation.type === 'attributes' && mutation.attributeName === 'editing') {
+//                    const cell = mutation.target;
+//                    if (cell.hasAttribute('editing')) {
+//                        const input = cell.querySelector('input, vaadin-combo-box, vaadin-select, textarea');
+//                        if (input && !input.matches(':focus')) {
+//                            setTimeout(() => input.focus(), 50);
+//                        }
+//                    }
+//                }
+//            });
+//        });
+//
+//        // Наблюдаем за изменениями атрибута editing
+//        document.querySelectorAll('vaadin-grid-cell').forEach(cell => {
+//            observer.observe(cell, { attributes: true });
+//        });
+//    """);
+//	}
 
 	private Component createActionButtons() {
 		HorizontalLayout buttons = new HorizontalLayout();
@@ -760,9 +929,10 @@ public class PaymentsView extends VerticalLayout {
 			// Преобразуем в редактируемые объекты
 			items = dtos.stream()
 					.map(EditableItem::new)
+					.sorted(Comparator.comparing(item -> item.getCurrentDto().nextDay()))
 					.collect(Collectors.toList());
-			// Сохраняем оригинальную копию
 
+			// Сохраняем оригинальную копию
 			originalItems = items.stream()
 					.map(EditableItem::new) // глубокое копирование
 					.collect(Collectors.toList());
