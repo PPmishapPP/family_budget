@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.mishapp.IBot;
 import ru.mishapp.dto.ListDto;
 import ru.mishapp.services.RuleExecuteService;
 
@@ -17,7 +16,6 @@ import java.util.Map;
 public class PeriodicChangeScheduler {
     
     private final RuleExecuteService ruleExecuteService;
-    private final IBot bot;
     
     @Scheduled(cron = "${schedule.periodic-rule}")
     @Transactional
@@ -26,7 +24,6 @@ public class PeriodicChangeScheduler {
         for (Map.Entry<Long, List<String>> entry : messages.entrySet()) {
             Long chatId = entry.getKey();
             ListDto messageList = new ListDto(entry.getValue());
-            bot.sendMessage(messageList.toTelegram(), chatId);
         }
     }
 }

@@ -4,7 +4,6 @@ package ru.mishapp.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.mishapp.dto.AccountBalance;
 import ru.mishapp.entity.Account;
 import ru.mishapp.entity.AccountHistory;
 import ru.mishapp.entity.PeriodicChangeRule;
@@ -14,7 +13,6 @@ import ru.mishapp.services.records.ApplyResult;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 @Service
@@ -23,19 +21,6 @@ public class AccountService {
     
     private final AccountRepository accountRepository;
     private final AccountHistoryRepository accountHistoryRepository;
-    
-    
-    public List<AccountBalance> readAllByChatId(Long chatId) {
-        return accountRepository.findAllAccountBalanceByChatId(chatId);
-    }
-    
-    public Account readByName(String name, long chatId) {
-        Optional<Account> byName = accountRepository.findByNameAndChatId(name, chatId);
-        if (byName.isEmpty()) {
-            throw new IllegalArgumentException("Нет аккаунта с таким именем");
-        }
-        return byName.get();
-    }
     
     @Transactional
     public Account create(String name, long chatId) {
@@ -74,5 +59,9 @@ public class AccountService {
 
     public List<Account> findAllByChatId(long chatId) {
         return accountRepository.findAllByChatId(chatId);
+    }
+
+    public AccountHistory findLastHistoryByAccountName(String accountName) {
+        return accountHistoryRepository.findLastByAccountName(accountName);
     }
 }

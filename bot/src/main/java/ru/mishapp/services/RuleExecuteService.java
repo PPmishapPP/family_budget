@@ -3,8 +3,12 @@ package ru.mishapp.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.mishapp.Constants;
+import ru.mishapp.dto.PeriodicChangeRuleDto;
+import ru.mishapp.entity.Account;
 import ru.mishapp.entity.PeriodicChange;
 import ru.mishapp.entity.PeriodicChangeRule;
+import ru.mishapp.mapper.PeriodicChangeRuleMapper;
+import ru.mishapp.repository.AccountRepository;
 import ru.mishapp.repository.PeriodicChangeRepository;
 import ru.mishapp.repository.PeriodicChangeRuleRepository;
 import ru.mishapp.services.records.ApplyResult;
@@ -24,6 +28,9 @@ public class RuleExecuteService {
     private final PeriodicChangeRuleRepository periodicChangeRuleRepository;
     private final PeriodicChangeRepository periodicChangeRepository;
     private final AccountService accountService;
+    private final PeriodicChangeRuleMapper mapper;
+    private final AccountRepository accountRepository;
+    private final PeriodicChangeService periodicChangeService;
 
     public Map<Long, List<String>> ruleExecute(LocalDate day) {
         Map<Long, List<String>> messages = new HashMap<>();
@@ -62,5 +69,26 @@ public class RuleExecuteService {
         }
         
         return messages;
+    }
+
+    public String ruleExecute(PeriodicChangeRuleDto dto, long chatId) {
+        Account account = accountRepository.findByNameAndChatId("Безопасное место для денег", chatId).orElseThrow(
+                () -> new IllegalArgumentException("Не существует счёта с именем 'Безопасное место для денег'")
+        );
+        Map<String, PeriodicChange> periodicChangeMap = periodicChangeService.findAll(chatId);
+        PeriodicChangeRule entity = mapper.toEntity(dto, account, periodicChangeMap);
+        ApplyResult applyResult = accountService.applyRule(entity);
+        LocalDate nextDay = entity.getType().next(entity.getNextDay(), entity.getPass());
+
+        if (nextDay == null) {
+            periodicChangeRuleRepository.save(entity.withActive(false));
+        } else if (!nextDay.isEqual(entity.getNextDay())) {
+            entity = entity.withNextDay(nextDay);
+            if (entity.getEndDate() != null && entity.getEndDate().isBefore(nextDay)) {
+                entity = entity.withActive(false);
+            }
+            periodicChangeRuleRepository.save(entity);
+        }
+        return "";
     }
 }

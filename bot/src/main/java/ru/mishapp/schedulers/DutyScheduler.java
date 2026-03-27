@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.mishapp.IBot;
 import ru.mishapp.entity.DutyUser;
 import ru.mishapp.entity.User;
 import ru.mishapp.repository.DutyRepository;
@@ -23,7 +22,6 @@ public class DutyScheduler {
     private final DutyRepository dutyRepository;
     private final UserRepository userRepository;
     private final Random random = new Random();
-    private final IBot bot;
     
     @Scheduled(cron = "${schedule.duty}")
     @Transactional
@@ -42,7 +40,6 @@ public class DutyScheduler {
                         dutyRepository.updateNext(duty.getId(), nextUserId);
                         int dayOfMonth = LocalDate.now().getDayOfMonth();
                         String message = getMessage(user, dayOfMonth);
-                        bot.sendMessage(message, duty.getChatId());
                     });
                 }
             }

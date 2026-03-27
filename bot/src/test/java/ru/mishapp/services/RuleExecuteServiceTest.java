@@ -162,7 +162,7 @@ class RuleExecuteServiceTest {
 
 	private PeriodicChangeRule createPeriodicChangeRule(Type type, LocalDate endDate) {
 		return new PeriodicChangeRule(1L, 1L, 1L,
-				null, "Платеж", -3000, type, 0,
+				"Платеж", -3000, type, 0,
 				LocalDate.of(2026, 1, 12), true, endDate);
 	}
 
