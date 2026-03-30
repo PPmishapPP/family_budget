@@ -9,6 +9,7 @@ import java.util.Map;
 @Getter
 public enum MediaStatus {
 	PLAN_TO_WATCH("Ожидает просмотра"),
+	IN_PROGRESS("В процессе"),
 	WATCHED("Просмотрено"),
 	WAITING_FOR_CONTINUATION("Ожидает продолжения"),
 	STOPPED("Остановлен просмотр"),
@@ -32,16 +33,16 @@ public enum MediaStatus {
 	private static final Map<MediaStatus, List<MediaStatus>> AVAILABLE_TRANSITIONS =
 			Map.of(
 					PLAN_TO_WATCH, List.of(
-							WATCHED, WAITING_FOR_CONTINUATION, CANCELED
+							IN_PROGRESS, WATCHED, WAITING_FOR_CONTINUATION, CANCELED
 					),
-					WATCHED, List.of(WAITING_FOR_CONTINUATION),
+					WATCHED, List.of(IN_PROGRESS, WAITING_FOR_CONTINUATION),
 					WAITING_FOR_CONTINUATION, List.of(
-							WATCHED, STOPPED, CANCELED
+							IN_PROGRESS, WATCHED, STOPPED, CANCELED
 					),
 					STOPPED, List.of(
-							PLAN_TO_WATCH, WATCHED, WAITING_FOR_CONTINUATION, CANCELED
+							IN_PROGRESS, PLAN_TO_WATCH, WATCHED, WAITING_FOR_CONTINUATION, CANCELED
 					),
-					CANCELED, List.of(PLAN_TO_WATCH)
+					CANCELED, List.of(IN_PROGRESS, PLAN_TO_WATCH)
 			);
 
 	public List<MediaStatus> getAvailableTransitions() {
