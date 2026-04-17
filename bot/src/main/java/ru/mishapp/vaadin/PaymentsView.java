@@ -307,6 +307,12 @@ public class PaymentsView extends VerticalLayout {
 				})
 				.setHeader("Сумма")
 				.setSortable(true)
+				.setComparator((item1, item2) -> {
+					// Сортируем по числовому значению, игнорируя иконку ✎
+					int sum1 = item1.currentDto.sum();
+					int sum2 = item2.currentDto.sum();
+					return Integer.compare(sum1, sum2);
+				})
 				.setAutoWidth(true)
 				.setFlexGrow(1)
 				.setEditorComponent(item -> {
@@ -347,6 +353,14 @@ public class PaymentsView extends VerticalLayout {
 					}
 					return new Span(description);
 				}).setHeader("Тип")
+				.setSortable(true)
+				.setComparator((item1, item2) -> {
+					// Сортируем по enum значению, а не по описанию
+					Type type1 = Type.valueOf(item1.currentDto.type());
+					Type type2 = Type.valueOf(item2.currentDto.type());
+					return type1.compareTo(type2); // Сортировка по enum (порядок объявления)
+					// Или по описанию: return type1.getDescription().compareTo(type2.getDescription());
+				})
 				.setAutoWidth(true)
 				.setFlexGrow(1)
 				.setEditorComponent(this::createTypeEditor);
