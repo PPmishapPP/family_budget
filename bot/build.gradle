@@ -53,3 +53,8 @@ jar {
     }
 }
 
+bootJar {
+    // Фиксированное имя артефакта для Docker-образа
+    archiveFileName = 'app.jar'
+}
+

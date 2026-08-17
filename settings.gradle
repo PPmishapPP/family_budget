@@ -1,3 +1,2 @@
 rootProject.name = 'family_budget'
 include 'bot'
-include 'telegram_starter'

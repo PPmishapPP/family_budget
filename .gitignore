@@ -35,6 +35,9 @@ bin/
 ### VS Code ###
 .vscode/
 
+### Docker ###
+docker/.env
+
 ### Mac OS ###
 .DS_Store
 /.idea/
