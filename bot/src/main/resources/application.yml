@@ -12,7 +12,7 @@ logging:
 
 schedule:
   periodic-rule: "0 0 0 1 1 *"
-  duty: "0 0 0 1 1 *"
+
   todo-reminder: "0 0 0 1 1 *"
   notifications: "0 0 0 1 1 *"
 

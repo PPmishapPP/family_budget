@@ -21,11 +21,11 @@ public class Account {
     private final long chatId;
     @MappedCollection(idColumn = "account_id")
     private final Set<AccountHistory> history;
-    
+
     public Account(String name, boolean status, long chatId) {
         this(null, name, status, chatId, new HashSet<>());
     }
-    
+
     @PersistenceCreator
     public Account(Long id, @Nonnull String name, boolean status, long chatId, Set<AccountHistory> history) {
         this.id = id;
@@ -33,15 +33,5 @@ public class Account {
         this.status = status;
         this.chatId = chatId;
         this.history = history;
-    }
-    
-    public String toTelegram() {
-        StringBuilder message = new StringBuilder();
-        
-        for (AccountHistory accountHistory : history) {
-            message.append(String.format("Id: %d, Имя: %s(%d₽)%n%n", id, name, accountHistory.getBalance()));
-        }
-        
-        return message.toString();
     }
 }

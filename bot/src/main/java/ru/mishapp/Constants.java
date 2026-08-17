@@ -9,9 +9,8 @@ import java.util.Locale;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Constants {
-    
-    public static final DateTimeFormatter DAY_AND_TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
     public static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    
-    public static final NumberFormat RUB = NumberFormat.getInstance(new Locale("ru", "RU"));
+
+    public static final NumberFormat RUB = NumberFormat.getInstance(Locale.of("ru", "RU"));
 }
