@@ -1,24 +1,35 @@
-version: "3.9"
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:6.2.0
-    container_name: zookeeper
+  db:
+    image: postgres:17
+    container_name: family_budget_db
+    restart: unless-stopped
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      POSTGRES_DB: family_budget
+      POSTGRES_USER: ${DATASOURCE_USERNAME:-usr}
+      POSTGRES_PASSWORD: ${DATASOURCE_PASSWORD:-usr}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATASOURCE_USERNAME:-usr} -d family_budget"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  broker:
-    image: confluentinc/cp-kafka:7.0.0
-    container_name: broker
-    ports:
-      - "9092:9092"
+  bot:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: family_budget_bot
+    restart: unless-stopped
     depends_on:
-      - zookeeper
+      db:
+        condition: service_healthy
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      DATASOURCE_URL: jdbc:postgresql://db:5432/family_budget
+      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME:-usr}
+      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD:-usr}
+    ports:
+      - "8080:8080"
+
+volumes:
+  db_data:

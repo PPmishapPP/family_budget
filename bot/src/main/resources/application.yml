@@ -1,21 +1,20 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/family_budget
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/family_budget}
     username: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
   flyway:
     enabled: true
-
-telegram:
-  bot:
-    name: ${BOT_NAME}
-    token: ${BOT_TOKEN}
 
 logging:
   level:
     org.springframework.jdbc.core.JdbcTemplate: TRACE
 
 schedule:
-  periodic-rule: "0 * * * * *"
-  duty: "0 * * * * *"
-  todo-reminder: "0 0 8 * * *"
+  periodic-rule: "0 0 0 1 1 *"
+
+  todo-reminder: "0 0 0 1 1 *"
+  notifications: "0 0 0 1 1 *"
+
+server:
+  port: 8080

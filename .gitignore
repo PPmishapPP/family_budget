@@ -35,7 +35,13 @@ bin/
 ### VS Code ###
 .vscode/
 
+### Docker ###
+docker/.env
+
 ### Mac OS ###
 .DS_Store
 /.idea/
 /bot/src/main/resources/application.properties
+/frontend/
+/target/
+/bot/src/main/frontend/

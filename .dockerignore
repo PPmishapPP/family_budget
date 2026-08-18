@@ -1,0 +1,21 @@
+# Сборка
+.gradle
+build/
+**/build/
+**/out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Системные файлы
+.DS_Store
+
+# Локальные секреты (в .env лежат реальные значения)
+docker/.env
+bot/src/main/resources/application.properties
+
+# Локальные каталоги
+frontend/
+target/
