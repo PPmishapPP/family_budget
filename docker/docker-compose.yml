@@ -16,6 +16,9 @@ services:
       retries: 10
 
   bot:
+    # Используем готовый образ, собранный на локальной машине.
+    # Секция build оставлена для локальной разработки, на сервере она не используется.
+    image: family_budget:latest
     build:
       context: ..
       dockerfile: Dockerfile
@@ -28,8 +31,9 @@ services:
       DATASOURCE_URL: jdbc:postgresql://db:5432/family_budget
       DATASOURCE_USERNAME: ${DATASOURCE_USERNAME:-usr}
       DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD:-usr}
+    # Порт доступен ТОЛЬКО с localhost — наружу приложение отдаёт Nginx (HTTPS)
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
 volumes:
   db_data:
