@@ -11,12 +11,9 @@ import java.util.List;
 @Mapper(componentModel = "spring", imports = MediaType.class)
 public interface MediaMapper {
 
-	@Mapping(target = "type", source = "type.name")
-	MediaDto toDto(Media media);
+    @Mapping(target = "type", source = "type.name")
+    MediaDto toDto(Media media);
 
-	List<MediaDto> toDtoList(List<Media> mediaList);
+    List<MediaDto> toDtoList(List<Media> mediaList);
 
-	@Mapping(target = "chatId", ignore = true)
-	@Mapping(target = "type", expression = "java(MediaType.of(mediaDto.getType()).get())")
-	Media toEntity(MediaDto mediaDto);
 }

@@ -6,7 +6,6 @@ import lombok.With;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.relational.core.mapping.Table;
-import ru.mishapp.Constants;
 import ru.mishapp.enumiration.Type;
 
 import java.time.LocalDate;
@@ -16,10 +15,9 @@ import java.time.LocalDate;
 @Builder
 @With
 public class PeriodicChangeRule {
-    
+
     @Id
     private final Long id;
-    private final long periodicChangeId;
     private final long targetAccountId;
     private final String name;
     private final int sum;
@@ -28,21 +26,19 @@ public class PeriodicChangeRule {
     private final LocalDate nextDay;
     private final boolean active;
     private final LocalDate endDate;
-    
+
     @PersistenceCreator
     public PeriodicChangeRule(
-		    Long id,
-		    long periodicChangeId,
-		    long targetAccountId,
-		    String name, int sum,
-		    Type type,
-		    int pass,
-		    LocalDate nextDay,
-		    boolean active,
+            Long id,
+            long targetAccountId,
+            String name, int sum,
+            Type type,
+            int pass,
+            LocalDate nextDay,
+            boolean active,
             LocalDate endDate
     ) {
         this.id = id;
-        this.periodicChangeId = periodicChangeId;
         this.targetAccountId = targetAccountId;
         this.name = name;
         this.sum = sum;
@@ -50,23 +46,6 @@ public class PeriodicChangeRule {
         this.pass = pass;
         this.nextDay = nextDay;
         this.active = active;
-	    this.endDate = endDate;
-    }
-
-	public PeriodicChangeRule(long periodicChangeId, long targetAccountId, String name, int sum, Type type, int pass, LocalDate nextDay, boolean active, LocalDate endDate) {
-		this.id = null;
-		this.periodicChangeId = periodicChangeId;
-		this.targetAccountId = targetAccountId;
-		this.name = name;
-		this.sum = sum;
-		this.type = type;
-		this.pass = pass;
-		this.nextDay = nextDay;
-		this.active = active;
-		this.endDate = endDate;
-	}
-
-	public String toTelegram() {
-        return String.format("%s: %s₽", name, Constants.RUB.format(sum));
+        this.endDate = endDate;
     }
 }

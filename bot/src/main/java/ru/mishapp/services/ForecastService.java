@@ -19,12 +19,12 @@ public class ForecastService {
 
     private final ForecastCalculator forecastCalculator;
 
-    public List<CalcItem> calculateForecast(List<PeriodicChangeRuleDto> dtos, long chatId, LocalDate to) {
+    public List<CalcItem> calculateForecast(List<PeriodicChangeRuleDto> dtos, LocalDate to) {
         return forecastCalculator.calc(dtos, to);
     }
 
-    public List<IncomeDto> forecastIncome(LocalDate to, String accountName, Long chatId) {
-        List<CalcItem> calcItems = forecastCalculator.calc(accountName, to, chatId);
+    public List<IncomeDto> forecastIncome(LocalDate to, long accountId) {
+        List<CalcItem> calcItems = forecastCalculator.calc(accountId, to);
 
         List<IncomeDto> result = new ArrayList<>();
         int oldMin = -1;

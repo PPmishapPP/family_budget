@@ -12,28 +12,26 @@ import ru.mishapp.enumiration.MediaType;
 @Getter
 public class Media {
 
-	@Id
-	private final Long id;
-	@Nonnull
-	private final String name;
-	@Nonnull
-	private final MediaStatus status;
-	@Nonnull
-	private final MediaType type;
+    @Id
+    private final Long id;
+    @Nonnull
+    private final String name;
+    @Nonnull
+    private final MediaStatus status;
+    @Nonnull
+    private final MediaType type;
+    private final Integer rating;
+    private final String description;
+    @Setter
+    private long accountId;
 
-	@Setter
-	private long chatId;
-
-	private final Integer rating;
-	private final String description;
-
-	public Media(Long id, @Nonnull String name, @Nonnull MediaStatus status, @Nonnull MediaType type, long chatId, Integer rating, String description) {
-		this.id = id;
-		this.name = name;
-		this.status = status;
-		this.type = type;
-		this.chatId = chatId;
-		this.rating = rating;
-		this.description = description;
-	}
+    public Media(Long id, @Nonnull String name, @Nonnull MediaStatus status, @Nonnull MediaType type, long accountId, Integer rating, String description) {
+        this.id = id;
+        this.name = name;
+        this.status = status;
+        this.type = type;
+        this.accountId = accountId;
+        this.rating = rating;
+        this.description = description;
+    }
 }

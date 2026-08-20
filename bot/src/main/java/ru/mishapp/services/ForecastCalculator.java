@@ -22,13 +22,13 @@ public class ForecastCalculator {
 
     private final PeriodicChangeRuleRepository periodicChangeRuleRepository;
     private final AccountHistoryRepository accountHistoryRepository;
-    
-    public List<CalcItem> calc(String accountName, LocalDate to, Long chatId) {
-        Map<LocalDate, List<PeriodicChangeRuleDto>> map = periodicChangeRuleRepository.findAllRuleDtos(chatId).stream()
+
+    public List<CalcItem> calc(Long accountId, LocalDate to) {
+        Map<LocalDate, List<PeriodicChangeRuleDto>> map = periodicChangeRuleRepository.findAllRuleDtos(accountId).stream()
                 .filter(PeriodicChangeRuleDto::active)
                 .collect(Collectors.groupingBy(PeriodicChangeRuleDto::nextDay));
 
-        AccountHistory last = accountHistoryRepository.findLastByAccountName(accountName);
+        AccountHistory last = accountHistoryRepository.findLastByAccountId(accountId);
         int balance = last.getBalance();
         return calc(map, balance, to);
     }
@@ -37,7 +37,7 @@ public class ForecastCalculator {
         Map<LocalDate, List<PeriodicChangeRuleDto>> map = dtos.stream()
                 .filter(PeriodicChangeRuleDto::active)
                 .collect(Collectors.groupingBy(PeriodicChangeRuleDto::nextDay));
-        AccountHistory last = accountHistoryRepository.findLastByAccountName(dtos.getLast().targetAccountName());
+        AccountHistory last = accountHistoryRepository.findLastByAccountId(dtos.getLast().targetAccountId());
         int balance = last.getBalance();
         return calc(map, balance, to);
     }

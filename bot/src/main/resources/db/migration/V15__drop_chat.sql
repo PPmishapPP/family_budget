@@ -1,0 +1,3 @@
+ALTER TABLE account DROP COLUMN chat_id;
+ALTER TABLE media DROP COLUMN chat_id;
+DROP TABLE chat;
