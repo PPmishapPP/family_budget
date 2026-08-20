@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/family_budget}
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/family_budget_v3}
     username: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
   flyway:

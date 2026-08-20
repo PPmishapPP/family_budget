@@ -2,15 +2,20 @@ package ru.mishapp.services;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.mishapp.entity.Account;
 import ru.mishapp.entity.AccountHistory;
 import ru.mishapp.entity.PeriodicChangeRule;
+import ru.mishapp.entity.User;
 import ru.mishapp.repository.AccountHistoryRepository;
 import ru.mishapp.repository.AccountRepository;
+import ru.mishapp.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +23,7 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccountHistoryRepository accountHistoryRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public Account create(String name) {
@@ -36,8 +42,16 @@ public class AccountService {
         );
     }
 
-    public Iterable<Account> readAllAccounts() {
-        return accountRepository.findAll();
+    public List<Account> readAllAccounts() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return List.of();
+        }
+        User user = userRepository.findByLogin(authentication.getName()).orElse(null);
+        if (user == null) {
+            return List.of();
+        }
+        return accountRepository.findAllByUserId(user.getId());
     }
 
     public AccountHistory findLastByAccountId(Long accountId) {

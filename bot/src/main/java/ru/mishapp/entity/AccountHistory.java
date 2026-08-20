@@ -10,7 +10,6 @@ import org.springframework.data.relational.core.mapping.Table;
 import ru.mishapp.dto.Change;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 
 @Table("account_history")
