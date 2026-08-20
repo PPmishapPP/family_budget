@@ -1,41 +1,55 @@
 create table account
 (
-    id      bigserial not null primary key,
-    name    varchar   not null,
-    status  boolean   not null,
-    chat_id bigint    not null,
-    unique (chat_id, name)
-);
-
-create table periodic_change
-(
-    id      bigserial   not null primary key,
-    name    varchar(50) not null,
-    chat_id bigint      not null,
-    unique (chat_id, name)
-);
-
-create table periodic_change_rule
-(
-    id                   bigserial   not null primary key,
-    periodic_change_id   bigint      not null references periodic_change (id),
-    target_account_id    bigint      not null references account (id),
-    receiving_account_id bigint references account (id),
-    name                 varchar     not null,
-    sum                  int         not null,
-    type                 varchar(10) not null,
-    pass                 int default 0,
-    next_day             date        not null
+    id     bigserial not null primary key,
+    name   varchar   not null,
+    status boolean   not null
 );
 
 create table account_history
 (
-    id                 bigserial not null primary key,
-    account_id         bigint    not null references account (id),
-    periodic_change_id bigint references periodic_change_rule (id),
-    sum                int       not null,
-    balance            int       not null,
-    date_time          timestamp not null,
-    comment            varchar(256)
+    id         bigserial not null primary key,
+    account_id bigint    not null references account (id),
+    sum        int       not null,
+    balance    int       not null,
+    date_time  timestamp not null,
+    comment    varchar(256)
 );
 
+create table media
+(
+    id          bigserial not null primary key,
+    name        varchar   not null,
+    status      varchar   not null,
+    type        varchar   not null,
+    account_id  bigint    not null,
+    rating      int check (rating is null or (rating between 1 and 10)),
+    description varchar
+);
+
+create table periodic_change_rule
+(
+    id                bigserial   not null primary key,
+    target_account_id bigint      not null references account (id),
+    name              varchar     not null,
+    sum               int         not null,
+    type              varchar(10) not null,
+    pass              int         not null default 0,
+    next_day          date        not null,
+    active            boolean     not null default true,
+    end_date          date
+);
+
+create table app_user
+(
+    id        bigserial not null primary key,
+    login     varchar   not null unique,
+    password  varchar   not null,
+    user_zone varchar   not null
+);
+
+create table user_account
+(
+    id         bigserial not null primary key,
+    user_id    bigint    not null references app_user (id),
+    account_id bigint    not null references account (id)
+);
