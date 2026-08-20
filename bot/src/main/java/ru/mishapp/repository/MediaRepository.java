@@ -8,6 +8,5 @@ import java.util.List;
 
 public interface MediaRepository extends CrudRepository<Media, Long> {
 
-	List<Media> findAllByChatId(Long chatId);
-	List<Media> findAllByChatIdAndType(Long chatId, MediaType type);
+    List<Media> findAllByAccountIdAndType(Long account, MediaType type);
 }

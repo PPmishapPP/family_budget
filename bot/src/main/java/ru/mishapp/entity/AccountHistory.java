@@ -10,6 +10,7 @@ import org.springframework.data.relational.core.mapping.Table;
 import ru.mishapp.dto.Change;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 
 @Table("account_history")
@@ -19,7 +20,13 @@ public class AccountHistory {
     @Id
     private final Long id;
     private final long accountId;
+    /**
+     * Изменение баланса
+     */
     private final int sum;
+    /**
+     * Баланс после изменения
+     */
     private final int balance;
     @Nonnull
     private final LocalDateTime dateTime;

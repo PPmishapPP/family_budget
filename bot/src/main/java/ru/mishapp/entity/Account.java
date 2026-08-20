@@ -18,20 +18,18 @@ public class Account {
     @Nonnull
     private final String name;
     private final boolean status;
-    private final long chatId;
     @MappedCollection(idColumn = "account_id")
     private final Set<AccountHistory> history;
 
-    public Account(String name, boolean status, long chatId) {
-        this(null, name, status, chatId, new HashSet<>());
+    public Account(String name, boolean status) {
+        this(null, name, status, new HashSet<>());
     }
 
     @PersistenceCreator
-    public Account(Long id, @Nonnull String name, boolean status, long chatId, Set<AccountHistory> history) {
+    public Account(Long id, @Nonnull String name, boolean status, Set<AccountHistory> history) {
         this.id = id;
         this.name = name;
         this.status = status;
-        this.chatId = chatId;
         this.history = history;
     }
 }
