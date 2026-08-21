@@ -46,6 +46,9 @@ import java.util.stream.Collectors;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 import static ru.mishapp.Constants.RUB;
 
+import jakarta.annotation.security.PermitAll;
+
+@PermitAll
 @RequiredArgsConstructor
 @Route(value = "payments", layout = MainLayout.class)
 public class PaymentsView extends VerticalLayout {
@@ -148,18 +151,18 @@ public class PaymentsView extends VerticalLayout {
 
         // Кнопка переключения режима редактирования
         editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        editButton.addClickListener(e -> toggleEditMode());
+        editButton.addClickListener(_ -> toggleEditMode());
         editButton.setEnabled(false);
 
-        cancelButton.addClickListener(e -> cancelChanges());
+        cancelButton.addClickListener(_ -> cancelChanges());
         cancelButton.setEnabled(false);
 
         // Кнопка добавления
         addButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         addButton.setEnabled(false); // По умолчанию выключена
-        addButton.addClickListener(e -> addNewRow());
+        addButton.addClickListener(_ -> addNewRow());
 
-        saveButton.addClickListener(e -> save());
+        saveButton.addClickListener(_ -> save());
         saveButton.setEnabled(false);
 
         toolbar.add(leftSection, editButton, cancelButton, addButton, saveButton);
@@ -396,7 +399,7 @@ public class PaymentsView extends VerticalLayout {
                         deleteButton.setEnabled(false);
                     }
 
-                    deleteButton.addClickListener(e -> {
+                    deleteButton.addClickListener(_ -> {
                         ConfirmDialog dialog = new ConfirmDialog();
                         dialog.setHeader("Подтверждение удаления");
                         dialog.setText(String.format("Вы уверены, что хотите удалить \"%s\"?",
@@ -408,9 +411,7 @@ public class PaymentsView extends VerticalLayout {
                         dialog.setConfirmText("Удалить");
                         dialog.setConfirmButtonTheme(ButtonVariant.LUMO_ERROR.getVariantName());
 
-                        dialog.addConfirmListener(confirmEvent -> {
-                            deleteEntity(item);
-                        });
+                        dialog.addConfirmListener(_ -> deleteEntity(item));
 
                         dialog.open();
                     });
@@ -424,7 +425,7 @@ public class PaymentsView extends VerticalLayout {
                         executeButton.setEnabled(false);
                     }
 
-                    executeButton.addClickListener(e -> {
+                    executeButton.addClickListener(_ -> {
                         executePayment(item); // Ваш метод выполнения платежа
                     });
 

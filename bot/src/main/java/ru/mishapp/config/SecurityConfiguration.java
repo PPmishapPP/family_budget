@@ -1,34 +1,30 @@
 package ru.mishapp.config;
 
-import lombok.RequiredArgsConstructor;
+import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import ru.mishapp.vaadin.LoginView;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfiguration {
 
     private final DbUserDetailsService userDetailsService;
 
+    public SecurityConfiguration(DbUserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
-                .requestMatchers("/VAADIN/**", "/manifest.webmanifest", "/sw.js",
-                        "/icons/**", "/images/**", "/frontend/**", "/themes/**").permitAll()
-                .anyRequest().authenticated()
-        );
-        http.headers(Customizer.withDefaults());
-        http.formLogin(Customizer.withDefaults());
-        http.anonymous(Customizer.withDefaults());
-        http.csrf(Customizer.withDefaults());
         http.userDetailsService(userDetailsService);
+        http.with(VaadinSecurityConfigurer.vaadin(),
+                vaadin -> vaadin.loginView(LoginView.class));
         return http.build();
     }
 
