@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import jakarta.annotation.security.PermitAll;
+
+@PermitAll
 @Route(value = "media", layout = MainLayout.class)
 public class MediaView extends VerticalLayout {
 
