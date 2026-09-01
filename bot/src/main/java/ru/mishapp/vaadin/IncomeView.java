@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
-public class IncomeView extends Dialog {
+public class IncomeView extends ResponsiveDialog {
 
     private final ForecastService service;
     private final Grid<IncomeDto> resultsGrid = new Grid<>();
@@ -34,18 +34,13 @@ public class IncomeView extends Dialog {
     private Button calculateButton;
 
     public IncomeView(ForecastService service, long accountId) {
+        super(900);
         this.service = service;
         this.accountId = accountId;
         initDialog();
     }
 
     private void initDialog() {
-        setWidth("900px");
-        setHeight("700px");
-        setCloseOnOutsideClick(false);
-        setCloseOnEsc(true);
-        setDraggable(true);
-        setResizable(true);
 
         // Создаем основное содержимое
         VerticalLayout mainLayout = new VerticalLayout();
@@ -109,11 +104,12 @@ public class IncomeView extends Dialog {
         datePickerLayout.setWidthFull();
         datePickerLayout.setAlignItems(FlexComponent.Alignment.END);
         datePickerLayout.setSpacing(true);
+        datePickerLayout.getStyle().set("flex-wrap", "wrap");
 
         datePicker = new DatePicker("Дата окончания расчета");
         datePicker.setLocale(new Locale("ru"));
         datePicker.setPlaceholder("дд.мм.гггг");
-        datePicker.setWidth("250px");
+        datePicker.setWidth("min(250px, 100%)");
         datePicker.setRequired(true);
         datePicker.setMin(LocalDate.now().plusDays(1));
         datePicker.setMax(LocalDate.now().plusYears(3));

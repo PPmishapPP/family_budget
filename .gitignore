@@ -37,6 +37,7 @@ bin/
 
 ### Docker ###
 docker/.env
+/family_budget.tar
 
 ### Mac OS ###
 .DS_Store
@@ -45,3 +46,4 @@ docker/.env
 /frontend/
 /target/
 /bot/src/main/frontend/
+/bot/node_modules

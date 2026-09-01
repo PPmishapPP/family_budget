@@ -50,6 +50,96 @@ docker compose -f docker/docker-compose.yml down -v
 docker compose -f docker/docker-compose.yml up -d --build
 ```
 
+## Деплой на слабый сервер
+
+Сервер, на котором живёт приложение, слабый и не справляется со сборкой образа
+(Vaadin production mode — тяжёлая сборка). Поэтому образ собирается локально,
+сохраняется в файл, переносится по SSH и загружается на сервере.
+
+Схема:
+
+```mermaid
+flowchart LR
+    A[Локальная машина<br/>собираем образ] --> B[docker save<br/>образ -> tar файл]
+    B --> C[scp<br/>tar на сервер]
+    C --> D[На сервере<br/>docker load]
+    D --> E[docker compose up -d<br/>без --build]
+```
+
+### Шаги
+
+1. **Сборка образа локально** (из корня проекта):
+
+   ```bash
+   docker build -t family_budget:latest .
+   ```
+
+2. **Сохранение образа в файл:**
+
+   ```bash
+   docker save family_budget:latest -o family_budget.tar
+   ```
+
+3. **Копирование на сервер по SSH:**
+
+   ```bash
+   scp -C family_budget.tar user@server:/home/user/family_budget/
+   ```
+
+   Флаг `-C` включает сжатие при передаче. При первом деплое так же переносится
+   конфигурация compose:
+
+   ```bash
+   scp -r docker user@server:/home/user/family_budget/
+   ```
+
+4. **На сервере — загрузка образа и запуск:**
+
+   ```bash
+   ssh user@server
+   cd /home/user/family_budget
+   ```
+
+   При первом деплое создать `.env` из примера (обязательно сменить пароль БД):
+
+   ```bash
+   cp docker/.env.example docker/.env
+   nano docker/.env   # измените DATASOURCE_PASSWORD
+   ```
+
+   Загрузить образ и запустить контейнеры (важно: **без** `--build`, чтобы не
+   собирать на слабом сервере):
+
+   ```bash
+   docker load -i family_budget.tar
+   docker images | grep family_budget      # проверка, что образ на месте
+   docker compose -f docker/docker-compose.yml up -d --force-recreate
+   ```
+
+   `--force-recreate` страхует от случая, когда compose не замечает, что образ
+   с тегом `latest` заменился. Том `db_data` (PostgreSQL) при этом не
+   пересоздаётся — данные и миграции Flyway сохраняются.
+
+   Проверка:
+
+   ```bash
+   docker compose -f docker/docker-compose.yml ps
+   docker compose -f docker/docker-compose.yml logs -f bot
+   ```
+
+### Обновление приложения
+
+Повторяются шаги 1 → 3 → 4:
+
+```bash
+docker build -t family_budget:latest .
+docker save family_budget:latest -o family_budget.tar
+scp -C family_budget.tar user@server:/home/user/family_budget/
+# на сервере:
+docker load -i family_budget.tar
+docker compose -f docker/docker-compose.yml up -d --force-recreate
+```
+
 ### Как это устроено
 
 - [`Dockerfile`](Dockerfile) — многоступенчатая сборка:

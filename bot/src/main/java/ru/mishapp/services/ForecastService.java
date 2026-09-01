@@ -19,8 +19,8 @@ public class ForecastService {
 
     private final ForecastCalculator forecastCalculator;
 
-    public List<CalcItem> calculateForecast(List<PeriodicChangeRuleDto> dtos, LocalDate to) {
-        return forecastCalculator.calc(dtos, to);
+    public List<CalcItem> calculateForecast(List<PeriodicChangeRuleDto> dtos, Long accountId, LocalDate to) {
+        return forecastCalculator.calc(dtos, accountId, to);
     }
 
     public List<IncomeDto> forecastIncome(LocalDate to, long accountId) {

@@ -22,8 +22,15 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 		setAlignItems(Alignment.CENTER);
 		setJustifyContentMode(JustifyContentMode.CENTER);
 
+		// На десктопе не даём форме растянуться на весь экран,
+		// на мобильных она занимает доступную ширину
+		setWidth("100%");
+		setMaxWidth("480px");
+		getStyle().set("margin", "0 auto");
+
 		login.setAction("login");
 		login.setForgotPasswordButtonVisible(false);
+		login.getStyle().set("width", "100%");
 
 		add(new H1("Семейный бот"), login);
 	}

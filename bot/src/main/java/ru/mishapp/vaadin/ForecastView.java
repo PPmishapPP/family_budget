@@ -26,26 +26,23 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
-public class ForecastView extends Dialog {
+public class ForecastView extends ResponsiveDialog {
 
     private final ForecastService service;
     private final List<PeriodicChangeRuleDto> dtos;
+    private final Long accountId;
     private final Grid<CalcItem> resultsGrid = new Grid<>();
     private DatePicker datePicker;
 
-    public ForecastView(ForecastService service, List<PeriodicChangeRuleDto> dtos) {
+    public ForecastView(ForecastService service, Long accountId, List<PeriodicChangeRuleDto> dtos) {
+        super(900);
         this.service = service;
         this.dtos = dtos;
+        this.accountId = accountId;
         initDialog();
     }
 
     private void initDialog() {
-        setWidth("900px");
-        setHeight("700px");
-        setCloseOnOutsideClick(false);
-        setCloseOnEsc(true);
-        setDraggable(true);
-        setResizable(true);
 
         // Создаем основное содержимое
         VerticalLayout mainLayout = new VerticalLayout();
@@ -109,11 +106,12 @@ public class ForecastView extends Dialog {
         datePickerLayout.setWidthFull();
         datePickerLayout.setAlignItems(FlexComponent.Alignment.END);
         datePickerLayout.setSpacing(true);
+        datePickerLayout.getStyle().set("flex-wrap", "wrap");
 
         datePicker = new DatePicker("Дата окончания расчета");
         datePicker.setLocale(new Locale("ru"));
         datePicker.setPlaceholder("дд.мм.гггг");
-        datePicker.setWidth("250px");
+        datePicker.setWidth("min(250px, 100%)");
         datePicker.setRequired(true);
         datePicker.setMin(LocalDate.now().plusDays(1));
         datePicker.setMax(LocalDate.now().plusYears(3));
@@ -239,7 +237,7 @@ public class ForecastView extends Dialog {
         UI.getCurrent().access(() -> {
             try {
                 // Выполняем расчет
-                List<CalcItem> results = service.calculateForecast(dtos, targetDate);
+                List<CalcItem> results = service.calculateForecast(dtos, accountId, targetDate);
 
                 loadingDialog.close();
 

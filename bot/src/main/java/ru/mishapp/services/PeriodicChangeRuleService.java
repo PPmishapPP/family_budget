@@ -15,8 +15,8 @@ public class PeriodicChangeRuleService {
     private final PeriodicChangeRuleRepository periodicChangeRuleRepository;
     private final PeriodicChangeRuleMapper mapper;
 
-    public void saveAll(List<PeriodicChangeRuleDto> dtos) {
-        periodicChangeRuleRepository.saveAll(mapper.toEntityList(dtos));
+    public void saveAll(List<PeriodicChangeRuleDto> dtos, Long accountId) {
+        periodicChangeRuleRepository.saveAll(mapper.toEntityList(dtos, accountId));
     }
 
     public List<PeriodicChangeRuleDto> findAllPeriodicChangeRuleDtos(long accountId) {

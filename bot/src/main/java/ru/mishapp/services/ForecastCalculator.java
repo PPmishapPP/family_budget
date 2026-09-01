@@ -33,11 +33,11 @@ public class ForecastCalculator {
         return calc(map, balance, to);
     }
 
-    public List<CalcItem> calc(List<PeriodicChangeRuleDto> dtos, LocalDate to) {
+    public List<CalcItem> calc(List<PeriodicChangeRuleDto> dtos, Long accountId, LocalDate to) {
         Map<LocalDate, List<PeriodicChangeRuleDto>> map = dtos.stream()
                 .filter(PeriodicChangeRuleDto::active)
                 .collect(Collectors.groupingBy(PeriodicChangeRuleDto::nextDay));
-        AccountHistory last = accountHistoryRepository.findLastByAccountId(dtos.getLast().targetAccountId());
+        AccountHistory last = accountHistoryRepository.findLastByAccountId(accountId);
         int balance = last.getBalance();
         return calc(map, balance, to);
     }

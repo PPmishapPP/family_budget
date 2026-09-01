@@ -19,8 +19,8 @@ public class RuleExecuteService {
     private final PeriodicChangeRuleMapper mapper;
 
     @Transactional
-    public void ruleExecute(PeriodicChangeRuleDto dto) {
-        PeriodicChangeRule entity = mapper.toEntity(dto);
+    public void ruleExecute(PeriodicChangeRuleDto dto, Long accountId) {
+        PeriodicChangeRule entity = mapper.toEntity(dto, accountId);
         accountService.applyRule(entity);
         LocalDate nextDay = entity.getType().next(entity.getNextDay(), entity.getPass());
 

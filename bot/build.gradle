@@ -49,6 +49,8 @@ jar {
         attributes "Main-Class": "ru.mishapp.BotApp"
     }
 
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }

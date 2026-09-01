@@ -24,6 +24,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.security.PermitAll;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -43,10 +44,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 import static ru.mishapp.Constants.RUB;
-
-import jakarta.annotation.security.PermitAll;
 
 @PermitAll
 @RequiredArgsConstructor
@@ -134,18 +132,20 @@ public class PaymentsView extends VerticalLayout {
         toolbar.setWidthFull();
         toolbar.setJustifyContentMode(JustifyContentMode.END);
         toolbar.setAlignItems(Alignment.END);
+        toolbar.getStyle().set("flex-wrap", "wrap");
 
-        // Контейнер для левой части (с балансом)
+        // Контейнер для левой части (с балансом) — всегда виден на мобильных
         HorizontalLayout leftSection = new HorizontalLayout();
         leftSection.setAlignItems(Alignment.CENTER);
         leftSection.setSpacing(true);
         leftSection.getStyle().set("margin-right", "auto");
+        leftSection.addClassName("balance-card");
 
         // Текст
         Span balanceIcon = new Span("💰 ");
 
         balanceSpan = new Span("Здесь будет баланс");
-        balanceSpan.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        balanceSpan.addClassName("balance-amount");
 
         leftSection.add(balanceIcon, balanceSpan);
 
@@ -218,7 +218,7 @@ public class PaymentsView extends VerticalLayout {
 
     private EditableItem createEmptyEditableItem() {
         // Создаем новый DTO с пустыми/дефолтными значениями
-        PeriodicChangeRuleDto emptyDto = new PeriodicChangeRuleDto(null,  "", null,
+        PeriodicChangeRuleDto emptyDto = new PeriodicChangeRuleDto(null, "",
                 0, Type.MONTHLY.toString(), 0, null, true, null);
 
         // Создаем EditableItem с одинаковыми current и original (пустыми)
@@ -234,7 +234,7 @@ public class PaymentsView extends VerticalLayout {
                 .map(EditableItem::getCurrentDto)
                 .toList();
 
-        periodicChangeRuleService.saveAll(itemsToSave);
+        periodicChangeRuleService.saveAll(itemsToSave, selectedAccount.getId());
         periodicChangeRuleService.deleteAll(itemsToDelete);
 
         // После сохранения обновляем оригинальные значения
@@ -587,7 +587,7 @@ public class PaymentsView extends VerticalLayout {
     }
 
     private void executePayment(EditableItem item) {
-        executeService.ruleExecute(item.getOriginalDto());
+        executeService.ruleExecute(item.getOriginalDto(), selectedAccount.getId());
         // После сохранения обновляем оригинальные значения
         loadDataForAccount(selectedAccount.getId());
         updateBalance();
@@ -600,7 +600,7 @@ public class PaymentsView extends VerticalLayout {
                 .map(EditableItem::toDto)
                 .toList();
         calculateButton.addClickListener(
-                _ -> new ForecastView(service, rules).open());
+                _ -> new ForecastView(service, selectedAccount.getId(), rules).open());
         calculateButton.setEnabled(selectedAccount != null);
         buttons.add(calculateButton);
         calculateIncomeButton.setEnabled(selectedAccount != null);
@@ -631,9 +631,10 @@ public class PaymentsView extends VerticalLayout {
         boolean hasChanges = items.stream().anyMatch(e -> e.isModified() || e.isNew() || e.isMarkedForDeletion());
         cancelButton.setEnabled(hasChanges);
         saveButton.setEnabled(hasChanges);
-        editButton.setEnabled(selectedAccount != null && isNotEmpty(originalItems));
-        calculateButton.setEnabled(selectedAccount != null && isNotEmpty(originalItems));
-        calculateIncomeButton.setEnabled(selectedAccount != null && isNotEmpty(originalItems));
+        boolean hasItems = originalItems != null && !originalItems.isEmpty();
+        editButton.setEnabled(selectedAccount != null && hasItems);
+        calculateButton.setEnabled(selectedAccount != null && hasItems);
+        calculateIncomeButton.setEnabled(selectedAccount != null && hasItems);
     }
 
     private void createAccountButtonsPanel() {
