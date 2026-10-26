@@ -18,7 +18,7 @@ public class MainLayout extends AppLayout {
 	public MainLayout() {
 		DrawerToggle toggle = new DrawerToggle();
 
-		H1 title = new H1("Семейный бюджет>");
+		H1 title = new H1("Семейный бюджет");
 		title.getStyle().set("font-size", "1.125rem").set("margin", "0");
 
 		SideNav nav = getSideNav();
@@ -37,7 +37,9 @@ public class MainLayout extends AppLayout {
 				VaadinIcon.MONEY.create());
 		SideNavItem mediaLink = new SideNavItem("Фильмы/сериалы", MediaView.class,
 				VaadinIcon.MOVIE.create());
-		nav.addItem(predictionLink, mediaLink);
+		SideNavItem historyLink = new SideNavItem("История платежей", HistoryView.class,
+				VaadinIcon.CLOCK.create());
+		nav.addItem(predictionLink, mediaLink, historyLink);
 		return nav;
 	}
 }
