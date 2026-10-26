@@ -2,17 +2,13 @@ package ru.mishapp.services;
 
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.mishapp.entity.Account;
 import ru.mishapp.entity.AccountHistory;
 import ru.mishapp.entity.PeriodicChangeRule;
-import ru.mishapp.entity.User;
 import ru.mishapp.repository.AccountHistoryRepository;
 import ru.mishapp.repository.AccountRepository;
-import ru.mishapp.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,7 +19,7 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccountHistoryRepository accountHistoryRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
     @Transactional
     public Account create(String name) {
@@ -42,20 +38,38 @@ public class AccountService {
         );
     }
 
+    @Transactional
+    public AccountHistory registerPayment(long accountId, String name, int sum) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Название платежа не может быть пустым");
+        }
+        String comment = name.trim();
+        if (comment.length() > 256) {
+            throw new IllegalArgumentException("Название платежа не может быть длиннее 256 символов");
+        }
+        if (sum == 0) {
+            throw new IllegalArgumentException("Сумма платежа не может быть равна нулю");
+        }
+
+        AccountHistory lastTarget = accountHistoryRepository.findLastByAccountId(accountId);
+        int balance = (lastTarget == null ? 0 : lastTarget.getBalance()) + sum;
+        AccountHistory payment = new AccountHistory(
+                accountId, sum, balance, LocalDateTime.now(), comment);
+        return accountHistoryRepository.save(payment);
+    }
+
     public List<Account> readAllAccounts() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return List.of();
-        }
-        User user = userRepository.findByLogin(authentication.getName()).orElse(null);
-        if (user == null) {
-            return List.of();
-        }
-        return accountRepository.findAllByUserId(user.getId());
+        return currentUserService.getCurrentUser()
+                .map(user -> accountRepository.findAllByUserId(user.getId()))
+                .orElseGet(List::of);
     }
 
     public AccountHistory findLastByAccountId(Long accountId) {
         return accountHistoryRepository.findLastByAccountId(accountId);
+    }
+
+    public List<AccountHistory> findHistoryByAccountId(Long accountId) {
+        return accountHistoryRepository.findHistoryByAccountId(accountId);
     }
 
     private AccountHistory createNext(AccountHistory last, int sum, String ruleName) {

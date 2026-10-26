@@ -64,6 +64,7 @@ public class PaymentsView extends VerticalLayout {
     private final Button addButton = new Button("Добавить", new Icon(VaadinIcon.PLUS));
     private final Button saveButton = new Button("Сохранить");
     private final Button calculateIncomeButton = new Button("Расчет дохода");
+    private final Button instantPaymentButton = new Button("Разовый платёж", new Icon(VaadinIcon.PLUS));
 
     // Текущий выбранный чат
     private Account selectedAccount;
@@ -165,8 +166,19 @@ public class PaymentsView extends VerticalLayout {
         saveButton.addClickListener(_ -> save());
         saveButton.setEnabled(false);
 
-        toolbar.add(leftSection, editButton, cancelButton, addButton, saveButton);
+        instantPaymentButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+        instantPaymentButton.setEnabled(false);
+        instantPaymentButton.addClickListener(_ -> openInstantPaymentDialog());
+
+        toolbar.add(leftSection, instantPaymentButton, editButton, cancelButton, addButton, saveButton);
         add(toolbar);
+    }
+
+    private void openInstantPaymentDialog() {
+        if (selectedAccount == null) {
+            return;
+        }
+        new InstantPaymentDialog(selectedAccount, accountService, this::updateBalance).open();
     }
 
     private void toggleEditMode() {
@@ -635,6 +647,7 @@ public class PaymentsView extends VerticalLayout {
         editButton.setEnabled(selectedAccount != null && hasItems);
         calculateButton.setEnabled(selectedAccount != null && hasItems);
         calculateIncomeButton.setEnabled(selectedAccount != null && hasItems);
+        instantPaymentButton.setEnabled(selectedAccount != null);
     }
 
     private void createAccountButtonsPanel() {

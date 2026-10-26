@@ -12,11 +12,4 @@ public interface UserRepository extends CrudRepository<User, Long> {
 
     @Query("SELECT * FROM app_user WHERE login = :login")
     Optional<User> findByLogin(@Param("login") String login);
-
-    @Query("""
-            SELECT u.*
-            FROM app_user u
-            JOIN user_account ua ON ua.user_id = u.id
-            WHERE ua.account_id = :accountId""")
-    List<User> findAllByAccountId(@Param("accountId") Long accountId);
 }
