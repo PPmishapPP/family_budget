@@ -18,3 +18,8 @@ schedule:
 
 server:
   port: 8080
+  servlet:
+    session:
+      timeout: 30d
+      cookie:
+        max-age: 30d
