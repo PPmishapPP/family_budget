@@ -2,20 +2,24 @@ package ru.mishapp.vaadin;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.spring.security.AuthenticationContext;
 import jakarta.annotation.security.PermitAll;
 
 @PermitAll
 @Route(value = "")
 @CssImport(value = "./styles/responsive.css")
 public class MainLayout extends AppLayout {
-	public MainLayout() {
+	public MainLayout(AuthenticationContext authenticationContext) {
 		DrawerToggle toggle = new DrawerToggle();
 
 		H1 title = new H1("Семейный бюджет");
@@ -27,7 +31,15 @@ public class MainLayout extends AppLayout {
 		Scroller scroller = new Scroller(nav);
 
 		addToDrawer(scroller);
-		addToNavbar(toggle, title);
+
+		Button logout = new Button("Выйти", e -> authenticationContext.logout());
+		logout.setIcon(VaadinIcon.SIGN_OUT.create());
+		logout.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+		Span spacer = new Span();
+		spacer.getStyle().set("flex", "1");
+
+		addToNavbar(toggle, title, spacer, logout);
 	}
 
 	private SideNav getSideNav() {
