@@ -90,7 +90,7 @@ flowchart LR
    конфигурация compose:
 
    ```bash
-   scp -r docker user@server:/home/user/family_budget/
+   scp -C family_budget.tar root@mishapp.ru:family_budget.tar
    ```
 
 4. **На сервере — загрузка образа и запуск:**

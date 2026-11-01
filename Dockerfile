@@ -5,7 +5,7 @@
 # =========================================================
 # Stage 1: сборка приложения (Vaadin production mode)
 # =========================================================
-FROM eclipse-temurin:26-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 
 WORKDIR /app
 
@@ -45,7 +45,7 @@ RUN --mount=type=cache,target=/root/.gradle/caches \
 # =========================================================
 # Stage 2: рантайм (только JRE)
 # =========================================================
-FROM eclipse-temurin:26-jre
+FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
