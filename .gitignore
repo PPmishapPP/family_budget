@@ -47,3 +47,22 @@ docker/.env
 /target/
 /bot/src/main/frontend/
 /bot/node_modules
+
+### Vaadin generated at repository root (legacy leftovers) ###
+/src/
+/package.json
+/package-lock.json
+/tsconfig.json
+/types.d.ts
+/vite.config.ts
+/vite.generated.ts
+/node_modules/
+
+### Web (React SPA) ###
+/web/node_modules/
+/web/dist/
+
+### Android ###
+*.jks
+*.keystore
+/local.properties
