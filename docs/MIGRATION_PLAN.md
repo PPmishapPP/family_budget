@@ -1,6 +1,7 @@
 # План миграции: Vaadin -> REST API + Web SPA + Android
 
-Статус: в работе (Этап 0: 0.1–0.5 выполнены; ветка `feature/rest-api` от `dev`)
+Статус: в работе (Этап 0 выполнен; Этап 1: 1.1, 1.3, 1.4, 1.5, 1.11;
+ветка `feature/rest-api` от `dev`)
 Обновлено: 2026-11-16
 Связанные документы: [DECISIONS.md](DECISIONS.md)
 
@@ -125,14 +126,23 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
 
 ### Этап 1. Backend REST API (5–8 дней)
 
-- [ ] 1.1. Добавить зависимости: `spring-boot-starter-web`, validation,
+- [x] 1.1. Добавить зависимости: `spring-boot-starter-web`, validation,
       `spring-boot-starter-oauth2-resource-server` (JWT), springdoc-openapi,
       Testcontainers. Vaadin-зависимости пока не трогаем.
+      Выполнено 2026-11-16: `spring-boot-starter-webmvc`, validation, oauth2-resource-server,
+      springdoc 3.2.0, Testcontainers 2.0.5; `:bot:test` и `:bot:bootJar` зелёные.
 - [ ] 1.2. Пакет `ru.mishapp.api`: `controller`, `dto`, `error`, `security`, `config`.
-- [ ] 1.3. Отдельные API-DTO + Jakarta Validation. Сущности наружу не отдаём.
-- [ ] 1.4. `GlobalExceptionHandler` на RFC 7807 `ProblemDetail` (`400/401/403/404/409`).
-- [ ] 1.5. `AccountAccessService`: проверка принадлежности счёта/правила/медиа
+      Частично 2026-11-16: созданы `dto`, `error`, `config`, `security`;
+      `controller` — в задаче 1.8.
+- [x] 1.3. Отдельные API-DTO + Jakarta Validation. Сущности наружу не отдаём.
+      Выполнено 2026-11-16: `ru.mishapp.api.dto` (auth, accounts, history, rules,
+      payments, forecast, media, reference, `PageResponse`).
+- [x] 1.4. `GlobalExceptionHandler` на RFC 7807 `ProblemDetail` (`400/401/403/404/409`).
+      Выполнено 2026-11-16: `ProblemDetail` + `errors` для валидации, 400/403/404/409/500.
+- [x] 1.5. `AccountAccessService`: проверка принадлежности счёта/правила/медиа
       пользователю; применять во всех эндпоинтах.
+      Выполнено 2026-11-16: `ru.mishapp.api.security.AccountAccessService`
+      (+ запросы в репозиториях), тест `AccountAccessServiceTest` — 7/7.
 - [ ] 1.6. Auth:
   - выдача access/refresh JWT (claims: `sub`, `uid`, `exp`);
   - таблица `refresh_token` (V3, хранить SHA-256 хеш, `expires_at`, `revoked`);
@@ -147,8 +157,11 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
       медиа, серверная валидация статусов/рейтинга/длин имён.
 - [ ] 1.10. OpenAPI: `/v3/api-docs` + Swagger UI; зафиксировать `openapi.json`
       в репозитории.
-- [ ] 1.11. Индексы БД (V3): `account_history(account_id, date_time)`,
+      Частично 2026-11-16: зависимость и `OpenApiConfiguration` готовы; снять
+      `openapi.json` после появления контроллеров (1.8).
+- [x] 1.11. Индексы БД (V3): `account_history(account_id, date_time)`,
       `media(account_id, type)`, `periodic_change_rule(target_account_id)`.
+      Выполнено 2026-11-16: `V3__api_indexes.sql`.
 - [ ] 1.12. Тесты:
   - unit — сервисы/валидация;
   - `MockMvc` — контракт, коды ошибок;
