@@ -7,8 +7,11 @@ import ru.mishapp.dto.PeriodicChangeRuleDto;
 import ru.mishapp.entity.PeriodicChangeRule;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PeriodicChangeRuleRepository extends CrudRepository<PeriodicChangeRule, Long> {
+
+    Optional<PeriodicChangeRule> findByIdAndTargetAccountId(Long id, Long targetAccountId);
 
     @Query("""
             SELECT
