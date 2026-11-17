@@ -77,13 +77,14 @@ minSdk 26, актуальные compile/target SDK.
 
 ### D-008. Аутентификация
 
-Статус: Ожидает подтверждения (по умолчанию принято)
+Статус: Принято и реализовано (2026-11-16)
 
 JWT: access 15 минут, refresh 30 дней (соответствует текущей 30-дневной сессии).
 Refresh-токен хранится в БД в виде SHA-256 хеша, ротация при refresh, отзыв при
-logout. Web: access в памяти, refresh в HttpOnly Secure cookie. Android: оба
+logout. Web: access в памяти, refresh в HttpOnly cookie. Android: оба
 токена в защищённом хранилище. `/auth/refresh` принимает refresh из cookie или
-из body.
+из body. Секрет подписи — `JWT_SECRET` (dev-значение по умолчанию в
+`application.yml`, для production задавать обязательно).
 
 ### D-009. Раздача web SPA
 

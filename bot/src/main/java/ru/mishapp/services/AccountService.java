@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.mishapp.entity.Account;
 import ru.mishapp.entity.AccountHistory;
 import ru.mishapp.entity.PeriodicChangeRule;
+import ru.mishapp.enumiration.PaymentDirection;
 import ru.mishapp.repository.AccountHistoryRepository;
 import ru.mishapp.repository.AccountRepository;
 
@@ -33,9 +34,20 @@ public class AccountService {
     @Transactional
     public void applyRule(PeriodicChangeRule rule) {
         AccountHistory lastTarget = accountHistoryRepository.findLastByAccountId(rule.getTargetAccountId());
-        accountHistoryRepository.save(
-                createNext(lastTarget, rule.getSum(), rule.getName())
-        );
+        int balance = lastTarget == null ? 0 : lastTarget.getBalance();
+        accountHistoryRepository.save(new AccountHistory(
+                rule.getTargetAccountId(),
+                rule.getSum(),
+                balance + rule.getSum(),
+                LocalDateTime.now(),
+                rule.getName()
+        ));
+    }
+
+    @Transactional
+    public AccountHistory registerPayment(long accountId, String name, int amount, PaymentDirection direction) {
+        int sum = direction == PaymentDirection.EXPENSE ? -amount : amount;
+        return registerPayment(accountId, name, sum);
     }
 
     @Transactional
@@ -68,17 +80,12 @@ public class AccountService {
         return accountHistoryRepository.findLastByAccountId(accountId);
     }
 
-    public List<AccountHistory> findHistoryByAccountId(Long accountId) {
-        return accountHistoryRepository.findHistoryByAccountId(accountId);
+    public int getBalance(long accountId) {
+        AccountHistory last = accountHistoryRepository.findLastByAccountId(accountId);
+        return last == null ? 0 : last.getBalance();
     }
 
-    private AccountHistory createNext(AccountHistory last, int sum, String ruleName) {
-        return AccountHistory.builder()
-                .accountId(last.getAccountId())
-                .sum(sum)
-                .balance(last.getBalance() + sum)
-                .dateTime(LocalDateTime.now())
-                .comment(ruleName)
-                .build();
+    public List<AccountHistory> findHistoryByAccountId(Long accountId) {
+        return accountHistoryRepository.findHistoryByAccountId(accountId);
     }
 }
