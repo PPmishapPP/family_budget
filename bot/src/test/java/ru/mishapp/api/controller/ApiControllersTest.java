@@ -30,6 +30,7 @@ import ru.mishapp.api.mapper.PaymentRuleApiMapper;
 import ru.mishapp.api.mapper.ReferenceApiMapper;
 import ru.mishapp.api.security.AccountAccessService;
 import ru.mishapp.api.security.ApiSecurityConfiguration;
+import ru.mishapp.api.security.AuthCookieService;
 import ru.mishapp.api.security.JwtService;
 import ru.mishapp.dto.PeriodicChangeRuleDto;
 import ru.mishapp.entity.Account;
@@ -86,7 +87,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         SpringDocConfigProperties.class,
         SpringDocWebMvcConfiguration.class
 })
-@Import({JwtConfiguration.class, JwtService.class, ApiSecurityConfiguration.class, OpenApiConfiguration.class,
+@Import({JwtConfiguration.class, JwtService.class, AuthCookieService.class, ApiSecurityConfiguration.class, OpenApiConfiguration.class,
         AccountApiMapper.class, PaymentRuleApiMapper.class, MediaApiMapper.class, ForecastApiMapper.class,
         ReferenceApiMapper.class})
 @EnableConfigurationProperties({JwtProperties.class, CorsProperties.class})
@@ -290,7 +291,7 @@ class ApiControllersTest {
         LocalDate to = LocalDate.of(2026, 12, 1);
         when(accessService.requireAccount(10L))
                 .thenReturn(new Account(10L, "Семья", true, Set.of()));
-        when(forecastService.calculateForecast(10L, to)).thenReturn(List.of(
+        when(forecastService.calculateForecast(eq(10L), eq(to), any())).thenReturn(List.of(
                 new CalcItem(to, 1400, new PeriodicChangeRuleDto(
                         7L, "Интернет", -500, "MONTHLY", 0, to, true, null))));
 

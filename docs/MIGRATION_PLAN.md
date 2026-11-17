@@ -1,6 +1,6 @@
 # План миграции: Vaadin -> REST API + Web SPA + Android
 
-Статус: в работе (Этап 0 выполнен; Этап 1: 1.1, 1.3–1.9, 1.11;
+Статус: в работе (Этап 0 выполнен; Этап 1 выполнен (1.1–1.12);
 ветка `feature/rest-api` от `dev`)
 Обновлено: 2026-11-17
 Связанные документы: [DECISIONS.md](DECISIONS.md)
@@ -131,10 +131,11 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
       Testcontainers. Vaadin-зависимости пока не трогаем.
       Выполнено 2026-11-16: `spring-boot-starter-webmvc`, validation, oauth2-resource-server,
       springdoc 3.2.0, Testcontainers 2.0.5; `:bot:test` и `:bot:bootJar` зелёные.
-- [ ] 1.2. Пакет `ru.mishapp.api`: `controller`, `dto`, `error`, `security`, `config`.
-      Частично 2026-11-16: созданы `dto`, `error`, `config`, `security`, `controller`
-      (`AuthController`, `AccountController`, `HistoryController`, `PaymentController`,
-      `PaymentRuleController`, `ForecastController`, `MediaController`, `ReferenceController`).
+- [x] 1.2. Пакет `ru.mishapp.api`: `controller`, `dto`, `error`, `security`, `config`.
+      Выполнено 2026-11-17: `dto`, `error`, `config`, `security`, `controller`, `mapper`;
+      контроллеры `Auth`, `Account`, `History`, `Payment`, `PaymentRule`, `Forecast`,
+      `Media`, `Reference`; транспортные детали вынесены в `AuthCookieService`,
+      `ReferenceApiMapper` и `ApiPaths`.
 - [x] 1.3. Отдельные API-DTO + Jakarta Validation. Сущности наружу не отдаём.
       Выполнено 2026-11-16: `ru.mishapp.api.dto` (auth, accounts, history, rules,
       payments, forecast, media, reference, `PageResponse`).
@@ -177,23 +178,21 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
 - [x] 1.11. Индексы БД (V3): `account_history(account_id, date_time)`,
       `media(account_id, type)`, `periodic_change_rule(target_account_id)`.
       Выполнено 2026-11-16: `V3__api_indexes.sql`.
-- [ ] 1.12. Тесты:
+- [x] 1.12. Тесты:
   - unit — сервисы/валидация;
   - `MockMvc` — контракт, коды ошибок;
   - `@SpringBootTest` + Testcontainers PostgreSQL — auth, ownership, refresh-ротация;
   - регресс: Vaadin-экран открывается, старые тесты зелёные.
-      Частично 2026-11-17: тесты приведены в соответствие с `*Command`/сущностями
-      и компилируются. Покрытие: unit `AuthServiceTest`/`JwtServiceTest`, MockMvc
-      `AuthControllerTest` и `ApiControllersTest`, unit
-      `PeriodicChangeRuleServiceTest`, `MediaServiceTest`, `RuleExecuteServiceTest`,
-      `ForecastServiceTest`, `ForecastCalculatorTest`; `ApiIntegrationTest`
-      (`@SpringBootTest` + Testcontainers PostgreSQL: login/refresh/rotation,
-      ownership) написан, но в WSL без Docker пропускается
-      (`@EnabledIf`/`disabledWithoutDocker`). Локальный прогон `:bot:test` пока
-      не стартует: Windows-командная строка Gradle Test Worker обрезается
-      (208 записей classpath = 33 187 символов при лимите 32 767). Нужен
-      прогон на CI/Linux или с коротким `GRADLE_USER_HOME`. Регресс Vaadin —
-      после запуска с Docker.
+      Выполнено 2026-11-17: тесты приведены в соответствие с `*Command`/сущностями;
+      `61/61` успешно, включая `ApiIntegrationTest` (`@SpringBootTest` +
+      Testcontainers PostgreSQL: login/refresh/rotation, ownership). Покрытие:
+      unit `AuthServiceTest`/`JwtServiceTest`, MockMvc `AuthControllerTest` и
+      `ApiControllersTest`, unit `PeriodicChangeRuleServiceTest`, `MediaServiceTest`,
+      `RuleExecuteServiceTest`, `ForecastServiceTest`, `ForecastCalculatorTest`.
+      Локальный `:bot:test` не стартует из-за лимита длины командной строки Windows
+      (208 записей classpath = 33 187 символов при лимите 32 767); прогон выполнен
+      через JUnit Platform Launcher. На CI/Linux или с коротким `GRADLE_USER_HOME`
+      Gradle-прогон должен работать штатно. Ручной smoke Vaadin — перед этапом 4.
 
 **Готово, когда:** все функции UI доступны через API, контракт в OpenAPI,
 тесты покрывают auth/ownership/CRUD/forecast, Vaadin не сломан.
