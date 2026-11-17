@@ -608,11 +608,10 @@ public class PaymentsView extends VerticalLayout {
     private Component createActionButtons() {
         HorizontalLayout buttons = new HorizontalLayout();
         buttons.setSpacing(true);
-        List<PeriodicChangeRuleDto> rules = items.stream()
-                .map(EditableItem::toDto)
-                .toList();
         calculateButton.addClickListener(
-                _ -> new ForecastView(service, selectedAccount.getId(), rules).open());
+                _ -> new ForecastView(service, selectedAccount.getId(), items.stream()
+                        .map(EditableItem::toDto)
+                        .toList()).open());
         calculateButton.setEnabled(selectedAccount != null);
         buttons.add(calculateButton);
         calculateIncomeButton.setEnabled(selectedAccount != null);
