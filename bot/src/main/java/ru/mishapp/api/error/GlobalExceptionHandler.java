@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -68,7 +69,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     public ProblemDetail handleAuthentication(AuthenticationException exception) {
-        return problem(HttpStatus.UNAUTHORIZED, "Требуется авторизация", "Неверный логин или пароль");
+        String detail = exception instanceof BadCredentialsException
+                ? "Неверный логин или пароль"
+                : "Требуется авторизация";
+        return problem(HttpStatus.UNAUTHORIZED, "Требуется авторизация", detail);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

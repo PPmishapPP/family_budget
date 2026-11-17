@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.mishapp.entity.AccountHistory;
+import ru.mishapp.entity.PeriodicChangeRule;
 import ru.mishapp.repository.AccountHistoryRepository;
 import ru.mishapp.repository.AccountRepository;
 
@@ -75,6 +76,28 @@ class AccountServiceTest {
         AccountHistory payment = accountService.registerPayment(accountId, "Подарок", 250);
 
         assertEquals(250, payment.getBalance());
+    }
+
+    @Test
+    void shouldApplyRuleFromZeroWhenHistoryIsEmpty() {
+        long accountId = 1L;
+        when(accountHistoryRepository.findLastByAccountId(accountId)).thenReturn(null);
+        when(accountHistoryRepository.save(any(AccountHistory.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        PeriodicChangeRule rule = PeriodicChangeRule.builder()
+                .targetAccountId(accountId)
+                .name("Аренда")
+                .sum(-200)
+                .active(true)
+                .build();
+
+        accountService.applyRule(rule);
+
+        verify(accountHistoryRepository).save(org.mockito.ArgumentMatchers.argThat(history ->
+                history.getAccountId() == accountId
+                        && history.getSum() == -200
+                        && history.getBalance() == -200
+                        && "Аренда".equals(history.getComment())));
     }
 
     @Test

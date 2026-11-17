@@ -24,4 +24,22 @@ public interface AccountHistoryRepository extends CrudRepository<AccountHistory,
             where account_id = :accountId
             order by date_time desc, id desc""")
     List<AccountHistory> findHistoryByAccountId(@Param("accountId") Long accountId);
+
+    @Query("""
+            select *
+            from account_history
+            where account_id = :accountId
+            order by date_time desc, id desc
+            limit :limit offset :offset""")
+    List<AccountHistory> findHistoryPageByAccountId(
+            @Param("accountId") Long accountId,
+            @Param("limit") int limit,
+            @Param("offset") long offset
+    );
+
+    @Query("""
+            select count(*)
+            from account_history
+            where account_id = :accountId""")
+    long countByAccountId(@Param("accountId") Long accountId);
 }

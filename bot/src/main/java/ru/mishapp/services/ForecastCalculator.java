@@ -29,7 +29,7 @@ public class ForecastCalculator {
                 .collect(Collectors.groupingBy(PeriodicChangeRuleDto::nextDay));
 
         AccountHistory last = accountHistoryRepository.findLastByAccountId(accountId);
-        int balance = last.getBalance();
+        int balance = last == null ? 0 : last.getBalance();
         return calc(map, balance, to);
     }
 
@@ -38,7 +38,7 @@ public class ForecastCalculator {
                 .filter(PeriodicChangeRuleDto::active)
                 .collect(Collectors.groupingBy(PeriodicChangeRuleDto::nextDay));
         AccountHistory last = accountHistoryRepository.findLastByAccountId(accountId);
-        int balance = last.getBalance();
+        int balance = last == null ? 0 : last.getBalance();
         return calc(map, balance, to);
     }
 

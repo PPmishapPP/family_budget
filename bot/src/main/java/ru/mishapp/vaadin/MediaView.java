@@ -20,6 +20,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Route;
 import ru.mishapp.dto.MediaDto;
+import ru.mishapp.services.records.MediaCommand;
 import ru.mishapp.entity.Account;
 import ru.mishapp.enumiration.MediaStatus;
 import ru.mishapp.enumiration.MediaType;
@@ -176,7 +177,10 @@ public class MediaView extends VerticalLayout {
     }
 
     private void loadMediaForAccount(Long accountId) {
-        //TODO сделать
+        List<MediaDto> media = new ArrayList<>();
+        media.addAll(mediaService.getMoviesByAccountId(accountId));
+        media.addAll(mediaService.getSeriesAccountId(accountId));
+        mediaGrid.setItems(media);
     }
 
     private void createMediaGrid() {
@@ -496,7 +500,23 @@ public class MediaView extends VerticalLayout {
     }
 
     private void saveMediaItem(MediaDto item) {
-        //TODO сделать
+        if (selectedAccount == null) {
+            return;
+        }
+        MediaType mediaType = MediaType.of(item.getType())
+                .orElseGet(() -> MediaType.valueOf(item.getType()));
+        MediaCommand request = new MediaCommand(
+                item.getName(),
+                mediaType,
+                item.getStatus(),
+                item.getRating(),
+                item.getDescription()
+        );
+        if (item.getId() == null) {
+            mediaService.create(selectedAccount.getId(), request);
+        } else {
+            mediaService.update(selectedAccount.getId(), item.getId(), request);
+        }
     }
 
     private void createFooter() {

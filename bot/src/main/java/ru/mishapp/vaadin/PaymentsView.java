@@ -231,7 +231,7 @@ public class PaymentsView extends VerticalLayout {
     private EditableItem createEmptyEditableItem() {
         // Создаем новый DTO с пустыми/дефолтными значениями
         PeriodicChangeRuleDto emptyDto = new PeriodicChangeRuleDto(null, "",
-                0, Type.MONTHLY.toString(), 0, null, true, null);
+                0, Type.MONTHLY.toString(), 0, LocalDate.now(), true, null);
 
         // Создаем EditableItem с одинаковыми current и original (пустыми)
         EditableItem editableItem = new EditableItem(emptyDto);

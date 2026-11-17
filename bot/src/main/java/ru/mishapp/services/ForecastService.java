@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.mishapp.dto.IncomeDto;
 import ru.mishapp.dto.PeriodicChangeRuleDto;
 import ru.mishapp.services.records.CalcItem;
+import ru.mishapp.services.records.IncomeCalcItem;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -23,10 +24,33 @@ public class ForecastService {
         return forecastCalculator.calc(dtos, accountId, to);
     }
 
-    public List<IncomeDto> forecastIncome(LocalDate to, long accountId) {
-        List<CalcItem> calcItems = forecastCalculator.calc(accountId, to);
+    public List<CalcItem> calculateForecast(Long accountId, LocalDate to) {
+        return forecastCalculator.calc(accountId, to);
+    }
 
-        List<IncomeDto> result = new ArrayList<>();
+    public List<CalcItem> calculateForecast(Long accountId, LocalDate to, List<PeriodicChangeRuleDto> rules) {
+        return rules == null
+                ? forecastCalculator.calc(accountId, to)
+                : forecastCalculator.calc(rules, accountId, to);
+    }
+
+    public List<IncomeDto> forecastIncome(LocalDate to, long accountId) {
+        return forecastIncomeRaw(to, accountId).stream()
+                .map(item -> new IncomeDto(
+                        item.date().format(DAY),
+                        RUB.format(item.balance()),
+                        item.increase() == null ? null : "+" + RUB.format(item.increase())
+                ))
+                .toList();
+    }
+
+    public List<IncomeCalcItem> forecastIncomeRaw(LocalDate to, long accountId) {
+        List<CalcItem> calcItems = forecastCalculator.calc(accountId, to);
+        if (calcItems.isEmpty()) {
+            return List.of();
+        }
+
+        List<IncomeCalcItem> result = new ArrayList<>();
         int oldMin = -1;
         while (true) {
             int min = calcItems.getFirst().balance();
@@ -48,14 +72,11 @@ public class ForecastService {
                         break;
                     }
                 }
-                if (oldMin == -1) {
-                    result.add(new IncomeDto(income.day().format(DAY),
-                            RUB.format(min), null));
-
-                } else {
-                    result.add(new IncomeDto(income.day().format(DAY),
-                            RUB.format(min), "+" + RUB.format((long) min - oldMin)));
-                }
+                result.add(new IncomeCalcItem(
+                        income.day(),
+                        min,
+                        oldMin == -1 ? null : min - oldMin
+                ));
                 oldMin = min;
             }
 

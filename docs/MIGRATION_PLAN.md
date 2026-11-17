@@ -1,8 +1,8 @@
 # План миграции: Vaadin -> REST API + Web SPA + Android
 
-Статус: в работе (Этап 0 выполнен; Этап 1: 1.1, 1.3, 1.4, 1.5, 1.11;
+Статус: в работе (Этап 0 выполнен; Этап 1: 1.1, 1.3–1.9, 1.11;
 ветка `feature/rest-api` от `dev`)
-Обновлено: 2026-11-16
+Обновлено: 2026-11-17
 Связанные документы: [DECISIONS.md](DECISIONS.md)
 
 ## 1. Контекст и цель
@@ -132,8 +132,9 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
       Выполнено 2026-11-16: `spring-boot-starter-webmvc`, validation, oauth2-resource-server,
       springdoc 3.2.0, Testcontainers 2.0.5; `:bot:test` и `:bot:bootJar` зелёные.
 - [ ] 1.2. Пакет `ru.mishapp.api`: `controller`, `dto`, `error`, `security`, `config`.
-      Частично 2026-11-16: созданы `dto`, `error`, `config`, `security`;
-      `controller` — в задаче 1.8.
+      Частично 2026-11-16: созданы `dto`, `error`, `config`, `security`, `controller`
+      (`AuthController`, `AccountController`, `HistoryController`, `PaymentController`,
+      `PaymentRuleController`, `ForecastController`, `MediaController`, `ReferenceController`).
 - [x] 1.3. Отдельные API-DTO + Jakarta Validation. Сущности наружу не отдаём.
       Выполнено 2026-11-16: `ru.mishapp.api.dto` (auth, accounts, history, rules,
       payments, forecast, media, reference, `PageResponse`).
@@ -143,22 +144,36 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
       пользователю; применять во всех эндпоинтах.
       Выполнено 2026-11-16: `ru.mishapp.api.security.AccountAccessService`
       (+ запросы в репозиториях), тест `AccountAccessServiceTest` — 7/7.
-- [ ] 1.6. Auth:
+- [x] 1.6. Auth:
   - выдача access/refresh JWT (claims: `sub`, `uid`, `exp`);
-  - таблица `refresh_token` (V3, хранить SHA-256 хеш, `expires_at`, `revoked`);
+  - таблица `refresh_token` (V4, хранить SHA-256 хеш, `expires_at`, `revoked`);
   - ротация refresh, отзыв при logout;
   - refresh cookie `HttpOnly` для web + токен в body для Android;
     `/refresh` принимает и cookie, и body.
-- [ ] 1.7. Два `SecurityFilterChain`: `/api/**` — stateless JWT, CSRF off;
+      Выполнено 2026-11-16: `JwtService`, `AuthService`, `AuthController`,
+      `V4__refresh_tokens.sql`; access 15 мин / refresh 30 дней, секрет из
+      `JWT_SECRET` (dev-значение по умолчанию), тесты `AuthServiceTest` 11/11,
+      `JwtServiceTest` 2/2, `AuthControllerTest` 8/8.
+- [x] 1.7. Два `SecurityFilterChain`: `/api/**` — stateless JWT, CSRF off;
       остальное — текущая Vaadin-сессия. CORS из property.
-- [ ] 1.8. Реализовать контроллеры по таблице выше, переиспользуя существующие
+      Выполнено 2026-11-16: `ApiSecurityConfiguration` (`@Order(1)`), Vaadin-цепочка
+      `@Order(2)`; CORS из `app.cors.allowed-origins`; 401/403 — `ProblemDetail`.
+- [x] 1.8. Реализовать контроллеры по таблице выше, переиспользуя существующие
       сервисы (не дублировать бизнес-логику).
-- [ ] 1.9. Дописать недостающее в домене: `MediaService.create/update`, валидация
+      Выполнено 2026-11-16: счета, баланс, история с `page/size`, разовый платёж,
+      CRUD/execute правил, прогноз и доход, медиа, справочники; ownership через
+      `AccountAccessService`; создание — `201 + Location`, удаление/execute — `204`.
+- [x] 1.9. Дописать недостающее в домене: `MediaService.create/update`, валидация
       медиа, серверная валидация статусов/рейтинга/длин имён.
-- [ ] 1.10. OpenAPI: `/v3/api-docs` + Swagger UI; зафиксировать `openapi.json`
+      Выполнено 2026-11-16: `MediaService` create/update + проверка переходов
+      статусов, `MediaView.loadMediaForAccount/saveMediaItem` больше не TODO,
+      новая строка правила получает `nextDay = today`, расчёт прогноза терпит
+      отсутствие истории (`balance = 0`).
+- [x] 1.10. OpenAPI: `/v3/api-docs` + Swagger UI; зафиксировать `openapi.json`
       в репозитории.
-      Частично 2026-11-16: зависимость и `OpenApiConfiguration` готовы; снять
-      `openapi.json` после появления контроллеров (1.8).
+      Выполнено 2026-11-16: `OpenApiConfiguration` (info + `bearerAuth`),
+      `ApiControllersTest.shouldExposeOpenApiDocument` проверяет `/v3/api-docs`
+      и пишет `bot/build/openapi.json`; контракт сохранён в `docs/openapi.json`.
 - [x] 1.11. Индексы БД (V3): `account_history(account_id, date_time)`,
       `media(account_id, type)`, `periodic_change_rule(target_account_id)`.
       Выполнено 2026-11-16: `V3__api_indexes.sql`.
@@ -167,6 +182,18 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
   - `MockMvc` — контракт, коды ошибок;
   - `@SpringBootTest` + Testcontainers PostgreSQL — auth, ownership, refresh-ротация;
   - регресс: Vaadin-экран открывается, старые тесты зелёные.
+      Частично 2026-11-17: тесты приведены в соответствие с `*Command`/сущностями
+      и компилируются. Покрытие: unit `AuthServiceTest`/`JwtServiceTest`, MockMvc
+      `AuthControllerTest` и `ApiControllersTest`, unit
+      `PeriodicChangeRuleServiceTest`, `MediaServiceTest`, `RuleExecuteServiceTest`,
+      `ForecastServiceTest`, `ForecastCalculatorTest`; `ApiIntegrationTest`
+      (`@SpringBootTest` + Testcontainers PostgreSQL: login/refresh/rotation,
+      ownership) написан, но в WSL без Docker пропускается
+      (`@EnabledIf`/`disabledWithoutDocker`). Локальный прогон `:bot:test` пока
+      не стартует: Windows-командная строка Gradle Test Worker обрезается
+      (208 записей classpath = 33 187 символов при лимите 32 767). Нужен
+      прогон на CI/Linux или с коротким `GRADLE_USER_HOME`. Регресс Vaadin —
+      после запуска с Docker.
 
 **Готово, когда:** все функции UI доступны через API, контракт в OpenAPI,
 тесты покрывают auth/ownership/CRUD/forecast, Vaadin не сломан.

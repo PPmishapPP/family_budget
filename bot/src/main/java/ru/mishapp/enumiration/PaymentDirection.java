@@ -1,4 +1,4 @@
-package ru.mishapp.api.dto;
+package ru.mishapp.enumiration;
 
 public enum PaymentDirection {
     EXPENSE,
