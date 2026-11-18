@@ -191,7 +191,7 @@ export function useExecutePaymentRuleMutation(accountId: number | null) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.paymentRules(accountId) })
       void queryClient.invalidateQueries({ queryKey: queryKeys.balance(accountId) })
-      void queryClient.invalidateQueries({ queryKey: queryKeys.historyAll })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history(accountId) })
     },
   })
 }
