@@ -1,9 +1,23 @@
+import { Navigate, Route, Routes } from 'react-router-dom'
+
+import { AppLayout } from './components/AppLayout.tsx'
+import { HistoryPage } from './pages/HistoryPage.tsx'
+import { LoginPage } from './pages/LoginPage.tsx'
+import { MediaPage } from './pages/MediaPage.tsx'
+import { PaymentsPage } from './pages/PaymentsPage.tsx'
+
 function App() {
   return (
-    <main className="app">
-      <h1>Family Budget</h1>
-      <p>Веб-клиент в разработке.</p>
-    </main>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<AppLayout />}>
+        <Route index element={<Navigate to="/payments" replace />} />
+        <Route path="payments" element={<PaymentsPage />} />
+        <Route path="history" element={<HistoryPage />} />
+        <Route path="media" element={<MediaPage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/payments" replace />} />
+    </Routes>
   )
 }
 
