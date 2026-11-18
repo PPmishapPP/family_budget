@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 
 import { baseClient } from '../api/baseClient.ts'
 import { api } from '../api/client.ts'
+import { readProblemMessage } from '../api/problem.ts'
 import { queryClient } from '../api/queryClient.ts'
 import { AuthContext } from './authContext.ts'
 import type { AuthStatus, User } from './authContext.ts'
@@ -53,7 +54,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: { login: loginValue, password },
     })
     if (!response.ok || !data?.accessToken) {
-      throw new Error(await readProblem(response))
+      throw new Error(
+        await readProblemMessage(
+          response,
+          response.status === 401 ? 'Неверный логин или пароль' : 'Не удалось выполнить вход',
+        ),
+      )
     }
 
     setAccessToken(data.accessToken)
@@ -79,20 +85,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ status, user, login, logout }), [status, user, login, logout])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-async function readProblem(response: Response): Promise<string> {
-  try {
-    const problem = (await response.json()) as { detail?: string }
-    if (problem.detail) {
-      return problem.detail
-    }
-  } catch {
-    return fallbackMessage(response.status)
-  }
-  return fallbackMessage(response.status)
-}
-
-function fallbackMessage(status: number): string {
-  return status === 401 ? 'Неверный логин или пароль' : 'Не удалось выполнить вход'
 }

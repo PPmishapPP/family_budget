@@ -14,6 +14,7 @@
     "api:gen": "npx -y openapi-typescript@7.13.0 ../docs/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^7.0.7",
     "@mantine/core": "^9.8.1",
     "@mantine/hooks": "^9.8.1",
     "@mantine/modals": "^9.8.1",
@@ -23,7 +24,9 @@
     "openapi-fetch": "^0.17.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-router-dom": "^7.18.5"
+    "react-hook-form": "^7.92.0",
+    "react-router-dom": "^7.18.5",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
