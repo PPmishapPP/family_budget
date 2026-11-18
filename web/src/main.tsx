@@ -7,13 +7,16 @@ import '@mantine/core/styles.css'
 import './index.css'
 
 import App from './App.tsx'
+import { AuthProvider } from './auth/AuthProvider.tsx'
 import { theme } from './theme.ts'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MantineProvider theme={theme} defaultColorScheme="auto">
       <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </BrowserRouter>
     </MantineProvider>
   </StrictMode>,

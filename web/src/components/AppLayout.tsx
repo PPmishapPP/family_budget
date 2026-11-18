@@ -1,7 +1,15 @@
-import { AppShell, Burger, Group, NavLink, Title } from '@mantine/core'
+import { ActionIcon, AppShell, Burger, Group, NavLink, Text, Title, Tooltip } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { IconCalendarStats, IconHistory, IconMovie, IconWallet } from '@tabler/icons-react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import {
+  IconCalendarStats,
+  IconHistory,
+  IconLogout,
+  IconMovie,
+  IconWallet,
+} from '@tabler/icons-react'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+
+import { useAuth } from '../auth/authContext.ts'
 
 const NAV_ITEMS = [
   { to: '/payments', label: 'План платежей', icon: IconCalendarStats },
@@ -12,6 +20,13 @@ const NAV_ITEMS = [
 export function AppLayout() {
   const [opened, { toggle, close }] = useDisclosure()
   const { pathname } = useLocation()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <AppShell
@@ -20,10 +35,24 @@ export function AppLayout() {
       padding="md"
     >
       <AppShell.Header>
-        <Group h="100%" px="md" gap="sm">
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" aria-label="Меню" />
-          <IconWallet size={22} />
-          <Title order={4}>Family Budget</Title>
+        <Group h="100%" px="md" gap="sm" justify="space-between">
+          <Group gap="sm">
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" aria-label="Меню" />
+            <IconWallet size={22} />
+            <Title order={4}>Family Budget</Title>
+          </Group>
+          <Group gap="xs">
+            {user && (
+              <Text size="sm" c="dimmed" visibleFrom="sm">
+                {user.login}
+              </Text>
+            )}
+            <Tooltip label="Выйти">
+              <ActionIcon variant="subtle" color="gray" onClick={handleLogout} aria-label="Выйти">
+                <IconLogout size={18} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
         </Group>
       </AppShell.Header>
 
