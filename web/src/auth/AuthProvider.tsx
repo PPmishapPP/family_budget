@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 
 import { baseClient } from '../api/baseClient.ts'
 import { api } from '../api/client.ts'
+import { queryClient } from '../api/queryClient.ts'
 import { AuthContext } from './authContext.ts'
 import type { AuthStatus, User } from './authContext.ts'
 import { refreshAccessToken, setSessionExpiredHandler } from './refresh.ts'
@@ -16,6 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setSessionExpiredHandler(() => {
       clearAccessToken()
+      queryClient.clear()
       setUser(null)
       setStatus('anonymous')
     })
@@ -69,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await baseClient.POST('/api/v1/auth/logout', { body: {} }).catch(() => undefined)
     clearAccessToken()
+    queryClient.clear()
     setUser(null)
     setStatus('anonymous')
   }, [])

@@ -1,4 +1,14 @@
-import { ActionIcon, AppShell, Burger, Group, NavLink, Text, Title, Tooltip } from '@mantine/core'
+import {
+  ActionIcon,
+  AppShell,
+  Burger,
+  Divider,
+  Group,
+  NavLink,
+  Text,
+  Title,
+  Tooltip,
+} from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import {
   IconCalendarStats,
@@ -10,6 +20,7 @@ import {
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../auth/authContext.ts'
+import { AccountSelect } from './AccountSelect.tsx'
 
 const NAV_ITEMS = [
   { to: '/payments', label: 'План платежей', icon: IconCalendarStats },
@@ -57,6 +68,8 @@ export function AppLayout() {
       </AppShell.Header>
 
       <AppShell.Navbar p="sm">
+        <AccountSelect />
+        <Divider my="sm" />
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
