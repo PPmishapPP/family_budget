@@ -1,8 +1,8 @@
 # План миграции: Vaadin -> REST API + Web SPA + Android
 
 Статус: в работе (Этап 0 выполнен; Этап 1 выполнен (1.1–1.12);
-ветка `feature/rest-api` от `dev`)
-Обновлено: 2026-11-17
+Этап 2 выполнен (2.1–2.10), в работе 2.11; ветка `feature/rest-api` от `dev`)
+Обновлено: 2026-11-19
 Связанные документы: [DECISIONS.md](DECISIONS.md)
 
 ## 1. Контекст и цель
@@ -199,21 +199,23 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
 
 ### Этап 2. Web SPA (7–10 дней)
 
-- [ ] 2.1. Scaffold `web/` (Vite + React + TS + ESLint/Prettier).
-- [ ] 2.2. UI-kit, роутер, layout, тема; мобильная адаптивность.
-- [ ] 2.3. Генерация API-клиента (orval/openapi-typescript) из `openapi.json`,
+- [x] 2.1. Scaffold `web/` (Vite + React + TS + ESLint/Prettier).
+- [x] 2.2. UI-kit, роутер, layout, тема; мобильная адаптивность.
+- [x] 2.3. Генерация API-клиента (orval/openapi-typescript) из `openapi.json`,
       npm-скрипт `api:gen`.
-- [ ] 2.4. Auth: login-экран, access в памяти, refresh — HttpOnly cookie,
+- [x] 2.4. Auth: login-экран, access в памяти, refresh — HttpOnly cookie,
       silent refresh при загрузке, logout.
-- [ ] 2.5. Общие компоненты: выбор счёта, формат `dd.MM.yyyy` и `ru-RU` RUB,
+- [x] 2.5. Общие компоненты: выбор счёта, формат `dd.MM.yyyy` и `ru-RU` RUB,
       loading/empty/error, confirm-диалоги, toast.
-- [ ] 2.6. Экран «План платежей»: баланс, список правил, CRUD, «Выполнить»,
+- [x] 2.6. Экран «План платежей»: баланс, список правил, CRUD, «Выполнить»,
       «Разовый платёж», «Прогноз», «Расчёт дохода».
-- [ ] 2.7. Экран «История платежей»: выбор счёта, пагинация, сортировка.
-- [ ] 2.8. Экран «Фильмы/сериалы»: фильтры все/фильмы/сериалы, CRUD, статусы
+- [x] 2.7. Экран «История платежей»: выбор счёта, пагинация, сортировка.
+- [x] 2.8. Экран «Фильмы/сериалы»: фильтры все/фильмы/сериалы, CRUD, статусы
       с допустимыми переходами, рейтинг 1–10, описание.
-- [ ] 2.9. Тесты: Vitest + RTL на формы/валидацию; Playwright smoke
+- [x] 2.9. Тесты: Vitest + RTL на формы/валидацию; Playwright smoke
       (логин -> платёж -> прогноз -> медиа).
+      Выполнено 2026-11-18: Vitest/RTL на формы и утилиты, Playwright smoke
+      (запускается при `E2E_LOGIN`/`E2E_PASSWORD`).
 - [ ] 2.10. Интеграция раздачи: сборка SPA -> static ресурсы Spring Boot,
       SPA-fallback; dev через Vite proxy на `:8080`.
 - [ ] 2.11. Публикация SPA на `/app` (Vaadin пока на `/`), Dockerfile multi-stage:
