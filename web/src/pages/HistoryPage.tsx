@@ -1,12 +1,20 @@
 import { Stack, Text, Title } from '@mantine/core'
+import { useState } from 'react'
 
 import { useAccount } from '../accounts/accountContext.ts'
-import { useHistoryQuery } from '../api/history.ts'
-import { HistoryTable } from '../components/history/HistoryTable.tsx'
+import {
+  HISTORY_PAGE_SIZE,
+  useHistoryQuery,
+  type HistorySortDirection,
+  type HistorySortKey,
+} from '../api/history.ts'
+import { HistoryTable, type HistorySort } from '../components/history/HistoryTable.tsx'
 import { EmptyState } from '../components/states/EmptyState.tsx'
 import { ErrorState } from '../components/states/ErrorState.tsx'
 import { LoadingState } from '../components/states/LoadingState.tsx'
 import { errorMessage } from '../lib/errors.ts'
+
+const DEFAULT_SORT: HistorySort = { key: 'date', direction: 'desc' }
 
 type HistoryContentProps = {
   accountId: number
@@ -14,7 +22,26 @@ type HistoryContentProps = {
 }
 
 function HistoryContent({ accountId, accountName }: HistoryContentProps) {
-  const historyQuery = useHistoryQuery(accountId)
+  const [page, setPage] = useState(1)
+  const [sort, setSort] = useState<HistorySort>(DEFAULT_SORT)
+
+  const historyQuery = useHistoryQuery(accountId, {
+    page: page - 1,
+    size: HISTORY_PAGE_SIZE,
+    sort: sort.key,
+    direction: sort.direction,
+  })
+
+  function handleSort(key: HistorySortKey) {
+    setSort((previous) => {
+      const direction: HistorySortDirection =
+        previous.key === key ? (previous.direction === 'asc' ? 'desc' : 'asc') : 'asc'
+      return { key, direction }
+    })
+    setPage(1)
+  }
+
+  const result = historyQuery.data
 
   return (
     <Stack gap="lg">
@@ -32,10 +59,19 @@ function HistoryContent({ accountId, accountName }: HistoryContentProps) {
           description={errorMessage(historyQuery.error, 'Не удалось загрузить историю платежей.')}
           onRetry={() => void historyQuery.refetch()}
         />
-      ) : (historyQuery.data?.length ?? 0) === 0 ? (
+      ) : (result?.totalElements ?? 0) === 0 ? (
         <EmptyState title="История пуста" description="На этом счёте пока нет операций." />
       ) : (
-        <HistoryTable entries={historyQuery.data ?? []} />
+        <HistoryTable
+          entries={result?.entries ?? []}
+          totalElements={result?.totalElements ?? 0}
+          totalPages={result?.totalPages ?? 0}
+          page={page}
+          pageSize={HISTORY_PAGE_SIZE}
+          sort={sort}
+          onSort={handleSort}
+          onPageChange={setPage}
+        />
       )}
     </Stack>
   )

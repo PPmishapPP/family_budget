@@ -964,6 +964,8 @@ export interface operations {
             query?: {
                 page?: number;
                 size?: number;
+                sort?: string;
+                direction?: string;
             };
             header?: never;
             path: {

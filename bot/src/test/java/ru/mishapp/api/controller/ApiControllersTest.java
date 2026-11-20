@@ -189,7 +189,7 @@ class ApiControllersTest {
     void shouldPageHistory() throws Exception {
         when(accessService.requireAccount(10L))
                 .thenReturn(new Account(10L, "Семья", true, Set.of()));
-        when(historyService.page(10L, 1, 2)).thenReturn(new HistoryPage(
+        when(historyService.page(10L, 1, 2, "date", "desc")).thenReturn(new HistoryPage(
                 List.of(new AccountHistory(
                         5L, 10L, -100, 1400, LocalDateTime.of(2026, 11, 16, 12, 0), "Продукты")),
                 1, 2, 3, 2));

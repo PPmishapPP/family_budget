@@ -7,7 +7,8 @@ import ru.mishapp.entity.AccountHistory;
 
 import java.util.List;
 
-public interface AccountHistoryRepository extends CrudRepository<AccountHistory, Long> {
+public interface AccountHistoryRepository extends CrudRepository<AccountHistory, Long>,
+        AccountHistoryRepositoryCustom {
 
     @Query("""
             select *
@@ -24,18 +25,6 @@ public interface AccountHistoryRepository extends CrudRepository<AccountHistory,
             where account_id = :accountId
             order by date_time desc, id desc""")
     List<AccountHistory> findHistoryByAccountId(@Param("accountId") Long accountId);
-
-    @Query("""
-            select *
-            from account_history
-            where account_id = :accountId
-            order by date_time desc, id desc
-            limit :limit offset :offset""")
-    List<AccountHistory> findHistoryPageByAccountId(
-            @Param("accountId") Long accountId,
-            @Param("limit") int limit,
-            @Param("offset") long offset
-    );
 
     @Query("""
             select count(*)

@@ -1,54 +1,21 @@
 import { Group, Pagination, Table, Text, UnstyledButton } from '@mantine/core'
 import { IconChevronDown, IconChevronUp, IconSelector } from '@tabler/icons-react'
-import { useMemo, useRef, useState } from 'react'
+import { useRef } from 'react'
 
-import type { HistoryEntry } from '../../api/history.ts'
+import type { HistoryEntry, HistorySortDirection, HistorySortKey } from '../../api/history.ts'
 import { formatDate, formatRub } from '../../lib/format.ts'
 
-const PAGE_SIZE = 20
-
-type SortKey = 'comment' | 'date' | 'sum' | 'balance'
-type SortDirection = 'asc' | 'desc'
-
-type SortState = {
-  key: SortKey
-  direction: SortDirection
-}
-
-const DEFAULT_SORT: SortState = { key: 'date', direction: 'desc' }
-
-function compareComments(a: HistoryEntry, b: HistoryEntry): number {
-  if (a.comment === null && b.comment === null) {
-    return 0
-  }
-  if (a.comment === null) {
-    return -1
-  }
-  if (b.comment === null) {
-    return 1
-  }
-  return a.comment.localeCompare(b.comment, 'ru')
-}
-
-function compareEntries(a: HistoryEntry, b: HistoryEntry, key: SortKey): number {
-  switch (key) {
-    case 'comment':
-      return compareComments(a, b)
-    case 'sum':
-      return a.sum - b.sum
-    case 'balance':
-      return a.balance - b.balance
-    case 'date':
-      return a.dateTime.localeCompare(b.dateTime)
-  }
+export type HistorySort = {
+  key: HistorySortKey
+  direction: HistorySortDirection
 }
 
 type SortHeaderProps = {
   label: string
-  sortKey: SortKey
-  sort: SortState
+  sortKey: HistorySortKey
+  sort: HistorySort
   align?: 'left' | 'right'
-  onSort: (key: SortKey) => void
+  onSort: (key: HistorySortKey) => void
 }
 
 function SortHeader({ label, sortKey, sort, align = 'left', onSort }: SortHeaderProps) {
@@ -70,38 +37,35 @@ function SortHeader({ label, sortKey, sort, align = 'left', onSort }: SortHeader
   )
 }
 
-export function HistoryTable({ entries }: { entries: HistoryEntry[] }) {
-  const [sort, setSort] = useState<SortState>(DEFAULT_SORT)
-  const [page, setPage] = useState(1)
+type HistoryTableProps = {
+  entries: HistoryEntry[]
+  totalElements: number
+  totalPages: number
+  page: number
+  pageSize: number
+  sort: HistorySort
+  onSort: (key: HistorySortKey) => void
+  onPageChange: (page: number) => void
+}
+
+export function HistoryTable({
+  entries,
+  totalElements,
+  totalPages,
+  page,
+  pageSize,
+  sort,
+  onSort,
+  onPageChange,
+}: HistoryTableProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const sorted = useMemo(() => {
-    const direction = sort.direction === 'asc' ? 1 : -1
-    return [...entries].sort((a, b) => {
-      const primary = compareEntries(a, b, sort.key)
-      if (primary !== 0) {
-        return primary * direction
-      }
-      return b.id - a.id
-    })
-  }, [entries, sort])
-
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const startIndex = (currentPage - 1) * PAGE_SIZE
-  const visible = sorted.slice(startIndex, startIndex + PAGE_SIZE)
-
-  function handleSort(key: SortKey) {
-    setSort((previous) =>
-      previous.key === key
-        ? { key, direction: previous.direction === 'asc' ? 'desc' : 'asc' }
-        : { key, direction: 'asc' },
-    )
-    setPage(1)
-  }
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + entries.length
+  const total = Math.max(1, totalPages)
 
   function handlePageChange(nextPage: number) {
-    setPage(nextPage)
+    onPageChange(nextPage)
     containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
@@ -112,31 +76,20 @@ export function HistoryTable({ entries }: { entries: HistoryEntry[] }) {
           <Table striped highlightOnHover withTableBorder withColumnBorders verticalSpacing="xs">
             <Table.Thead>
               <Table.Tr>
-                <SortHeader
-                  label="Наименование"
-                  sortKey="comment"
-                  sort={sort}
-                  onSort={handleSort}
-                />
-                <SortHeader
-                  label="Сумма"
-                  sortKey="sum"
-                  sort={sort}
-                  align="right"
-                  onSort={handleSort}
-                />
-                <SortHeader label="Дата" sortKey="date" sort={sort} onSort={handleSort} />
+                <SortHeader label="Наименование" sortKey="comment" sort={sort} onSort={onSort} />
+                <SortHeader label="Сумма" sortKey="sum" sort={sort} align="right" onSort={onSort} />
+                <SortHeader label="Дата" sortKey="date" sort={sort} onSort={onSort} />
                 <SortHeader
                   label="Баланс"
                   sortKey="balance"
                   sort={sort}
                   align="right"
-                  onSort={handleSort}
+                  onSort={onSort}
                 />
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {visible.map((item) => (
+              {entries.map((item) => (
                 <Table.Tr key={item.id}>
                   <Table.Td>
                     {item.comment ?? (
@@ -165,14 +118,14 @@ export function HistoryTable({ entries }: { entries: HistoryEntry[] }) {
 
       <Group justify="space-between" align="center" gap="sm" wrap="wrap" mt="md">
         <Text size="sm" c="dimmed">
-          Показано {startIndex + 1}–{startIndex + visible.length} из {sorted.length}
+          Показано {entries.length > 0 ? `${startIndex + 1}–${endIndex}` : 0} из {totalElements}
         </Text>
         <Pagination
-          total={totalPages}
-          value={currentPage}
+          total={total}
+          value={page}
           onChange={handlePageChange}
           size="sm"
-          withEdges={totalPages > 7}
+          withEdges={total > 7}
         />
       </Group>
     </div>
