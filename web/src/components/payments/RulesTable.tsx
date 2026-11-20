@@ -9,17 +9,17 @@ import {
 } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 
-import type { PaymentRuleDraft } from '../../api/paymentRules.ts'
+import type { PaymentRule } from '../../api/paymentRules.ts'
 import { formatDate, formatRub } from '../../lib/format.ts'
 import { PAYMENT_RULE_TYPES, PAYMENT_RULE_TYPE_LABELS, isRuleDue } from '../../lib/paymentRules.ts'
 
 type RulesTableProps = {
-  drafts: PaymentRuleDraft[]
-  editMode: boolean
+  rules: PaymentRule[]
   executingId: number | null
-  onEdit: (draft: PaymentRuleDraft) => void
-  onExecute: (draft: PaymentRuleDraft) => void
-  onDelete: (draft: PaymentRuleDraft) => void
+  deletingId: number | null
+  onEdit: (rule: PaymentRule) => void
+  onExecute: (rule: PaymentRule) => void
+  onDelete: (rule: PaymentRule) => void
 }
 
 type SortField = 'name' | 'sum' | 'type' | 'nextDay' | 'endDate'
@@ -40,53 +40,46 @@ function compareNullableDates(a: string | null, b: string | null): number {
   return a.localeCompare(b)
 }
 
-function compareDrafts(a: PaymentRuleDraft, b: PaymentRuleDraft, field: SortField): number {
-  const left = a.current
-  const right = b.current
+function compareRules(a: PaymentRule, b: PaymentRule, field: SortField): number {
   switch (field) {
     case 'name':
-      return left.name.localeCompare(right.name, 'ru')
+      return a.name.localeCompare(b.name, 'ru')
     case 'sum':
-      return left.sum - right.sum
+      return a.sum - b.sum
     case 'type':
-      return (TYPE_ORDER.get(left.type) ?? 0) - (TYPE_ORDER.get(right.type) ?? 0)
+      return (TYPE_ORDER.get(a.type) ?? 0) - (TYPE_ORDER.get(b.type) ?? 0)
     case 'nextDay':
-      return left.nextDay.localeCompare(right.nextDay)
+      return a.nextDay.localeCompare(b.nextDay)
     case 'endDate':
-      return compareNullableDates(left.endDate, right.endDate)
+      return compareNullableDates(a.endDate, b.endDate)
   }
 }
 
-function sortDrafts(
-  drafts: PaymentRuleDraft[],
+function sortRules(
+  rules: PaymentRule[],
   field: SortField,
   direction: SortDirection,
-): PaymentRuleDraft[] {
-  return [...drafts].sort((a, b) => {
-    const aNew = a.id === null
-    const bNew = b.id === null
-    if (aNew !== bNew) {
-      return aNew ? -1 : 1
-    }
-    const result = compareDrafts(a, b, field)
+): PaymentRule[] {
+  return [...rules].sort((a, b) => {
+    const result = compareRules(a, b, field)
     if (result !== 0) {
-      if (field === 'endDate' && (a.current.endDate === null || b.current.endDate === null)) {
+      if (field === 'endDate' && (a.endDate === null || b.endDate === null)) {
         return result
       }
       return direction === 'asc' ? result : -result
     }
-    const byNextDay = a.current.nextDay.localeCompare(b.current.nextDay)
+    const byNextDay = a.nextDay.localeCompare(b.nextDay)
     if (byNextDay !== 0) {
       return byNextDay
     }
-    return (a.id ?? 0) - (b.id ?? 0)
+    return a.id - b.id
   })
 }
 
 export function RulesTable({
-  drafts,
-  editMode,
+  rules,
   executingId,
+  deletingId,
   onEdit,
   onExecute,
   onDelete,
@@ -94,9 +87,9 @@ export function RulesTable({
   const [sortField, setSortField] = useState<SortField>('nextDay')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
-  const sortedDrafts = useMemo(
-    () => sortDrafts(drafts, sortField, sortDirection),
-    [drafts, sortField, sortDirection],
+  const sortedRules = useMemo(
+    () => sortRules(rules, sortField, sortDirection),
+    [rules, sortField, sortDirection],
   )
 
   function toggleSort(field: SortField) {
@@ -144,36 +137,13 @@ export function RulesTable({
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {sortedDrafts.map((draft) => {
-            const rule = draft.current
-            const marked = draft.markedForDeletion
-            const isNew = draft.id === null
-            const original = draft.original
-            const nameMarked = original !== null && original.name !== rule.name
-            const sumMarked = original !== null && original.sum !== rule.sum
-            const typeMarked = original !== null && original.type !== rule.type
+          {sortedRules.map((rule) => {
             const name = rule.name || '—'
             return (
-              <Table.Tr
-                key={draft.key}
-                style={{
-                  opacity: marked ? 0.6 : undefined,
-                  backgroundColor: marked ? 'var(--mantine-color-red-0)' : undefined,
-                  textDecoration: marked ? 'line-through' : undefined,
-                }}
-              >
-                <Table.Td>
-                  {nameMarked ? '✎ ' : ''}
-                  {name}
-                </Table.Td>
-                <Table.Td ta="right">
-                  {formatRub(rule.sum)}
-                  {sumMarked ? ' ✎' : ''}
-                </Table.Td>
-                <Table.Td>
-                  {PAYMENT_RULE_TYPE_LABELS[rule.type]}
-                  {typeMarked ? ' ✎' : ''}
-                </Table.Td>
+              <Table.Tr key={rule.id}>
+                <Table.Td>{name}</Table.Td>
+                <Table.Td ta="right">{formatRub(rule.sum)}</Table.Td>
+                <Table.Td>{PAYMENT_RULE_TYPE_LABELS[rule.type]}</Table.Td>
                 <Table.Td>
                   <Group gap={6} wrap="nowrap">
                     <span>{formatDate(rule.nextDay)}</span>
@@ -190,8 +160,7 @@ export function RulesTable({
                     <Tooltip label="Изменить">
                       <ActionIcon
                         variant="subtle"
-                        onClick={() => onEdit(draft)}
-                        disabled={!editMode || marked}
+                        onClick={() => onEdit(rule)}
                         aria-label={`Изменить ${name}`}
                       >
                         <IconPencil size={18} />
@@ -201,9 +170,8 @@ export function RulesTable({
                       <ActionIcon
                         variant="subtle"
                         color="teal"
-                        loading={!isNew && executingId === draft.id}
-                        onClick={() => onExecute(draft)}
-                        disabled={editMode || marked || isNew}
+                        loading={executingId === rule.id}
+                        onClick={() => onExecute(rule)}
                         aria-label={`Выполнить ${name}`}
                       >
                         <IconPlayerPlay size={18} />
@@ -213,8 +181,8 @@ export function RulesTable({
                       <ActionIcon
                         variant="subtle"
                         color="red"
-                        onClick={() => onDelete(draft)}
-                        disabled={!editMode || marked}
+                        loading={deletingId === rule.id}
+                        onClick={() => onDelete(rule)}
                         aria-label={`Удалить ${name}`}
                       >
                         <IconTrash size={18} />

@@ -9,7 +9,13 @@ function setup() {
   const onSubmit = vi.fn()
   const onClose = vi.fn()
   renderWithProviders(
-    <PaymentRuleFormModal opened draft={null} onClose={onClose} onSubmit={onSubmit} />,
+    <PaymentRuleFormModal
+      opened
+      rule={null}
+      submitting={false}
+      onClose={onClose}
+      onSubmit={onSubmit}
+    />,
   )
   return { user: userEvent.setup(), onSubmit, onClose }
 }

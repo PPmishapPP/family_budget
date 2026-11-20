@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 
-import type { PaymentRuleDraft, PaymentRuleInput } from '../../api/paymentRules.ts'
+import type { PaymentRule, PaymentRuleInput } from '../../api/paymentRules.ts'
 import { toIsoDate } from '../../lib/format.ts'
 import { PAYMENT_RULE_TYPE_OPTIONS, PAYMENT_RULE_TYPES } from '../../lib/paymentRules.ts'
 import type { PaymentRuleType } from '../../lib/paymentRules.ts'
@@ -33,13 +33,14 @@ type RuleFormValues = z.infer<typeof ruleSchema>
 
 type PaymentRuleFormModalProps = {
   opened: boolean
-  draft: PaymentRuleDraft | null
+  rule: PaymentRule | null
+  submitting: boolean
   onClose: () => void
   onSubmit: (input: PaymentRuleInput) => void
 }
 
-function toFormValues(draft: PaymentRuleDraft | null): RuleFormValues {
-  if (!draft) {
+function toFormValues(rule: PaymentRule | null): RuleFormValues {
+  if (!rule) {
     return {
       name: '',
       sum: 0,
@@ -49,21 +50,22 @@ function toFormValues(draft: PaymentRuleDraft | null): RuleFormValues {
     }
   }
   return {
-    name: draft.current.name,
-    sum: draft.current.sum,
-    type: draft.current.type,
-    nextDay: draft.current.nextDay,
-    endDate: draft.current.endDate,
+    name: rule.name,
+    sum: rule.sum,
+    type: rule.type,
+    nextDay: rule.nextDay,
+    endDate: rule.endDate,
   }
 }
 
 export function PaymentRuleFormModal({
   opened,
-  draft,
+  rule,
+  submitting,
   onClose,
   onSubmit,
 }: PaymentRuleFormModalProps) {
-  const defaults = useMemo(() => toFormValues(draft), [draft])
+  const defaults = useMemo(() => toFormValues(rule), [rule])
   const form = useForm<RuleFormValues>({
     resolver: zodResolver(ruleSchema),
     defaultValues: defaults,
@@ -75,7 +77,7 @@ export function PaymentRuleFormModal({
     }
   }, [opened, defaults, form])
 
-  const isNew = draft === null || draft.id === null
+  const isNew = rule === null
 
   const submit = form.handleSubmit((values) => {
     onSubmit({
@@ -190,10 +192,12 @@ export function PaymentRuleFormModal({
           />
 
           <Group justify="flex-end" mt="md">
-            <Button variant="default" onClick={onClose}>
+            <Button variant="default" onClick={onClose} disabled={submitting}>
               Отмена
             </Button>
-            <Button type="submit">{isNew ? 'Добавить' : 'Сохранить'}</Button>
+            <Button type="submit" loading={submitting}>
+              {isNew ? 'Добавить' : 'Сохранить'}
+            </Button>
           </Group>
         </Stack>
       </form>
