@@ -1,7 +1,7 @@
 # План миграции: Vaadin -> REST API + Web SPA + Android
 
 Статус: в работе (Этап 0 выполнен; Этап 1 выполнен (1.1–1.12);
-Этап 2 выполнен (2.1–2.10), в работе 2.11; ветка `feature/rest-api` от `dev`)
+Этап 2 выполнен (2.1–2.11); ветка `feature/web` от `dev`)
 Обновлено: 2026-11-19
 Связанные документы: [DECISIONS.md](DECISIONS.md)
 
@@ -216,10 +216,22 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
       (логин -> платёж -> прогноз -> медиа).
       Выполнено 2026-11-18: Vitest/RTL на формы и утилиты, Playwright smoke
       (запускается при `E2E_LOGIN`/`E2E_PASSWORD`).
-- [ ] 2.10. Интеграция раздачи: сборка SPA -> static ресурсы Spring Boot,
+- [x] 2.10. Интеграция раздачи: сборка SPA -> static ресурсы Spring Boot,
       SPA-fallback; dev через Vite proxy на `:8080`.
-- [ ] 2.11. Публикация SPA на `/app` (Vaadin пока на `/`), Dockerfile multi-stage:
+      Выполнено 2026-11-19: `SpaWebConfiguration` (resource handler `/app/**`,
+      fallback на `index.html`, redirect `/app` -> `/app/`),
+      `SpaSecurityConfiguration` (`@Order(0)`, `/app/**` публично),
+      задачи `webBuild`/`stageWebApp` в `bot/build.gradle`, Vite proxy
+      `/api` -> `:8080`; `SpaWebConfigurationTest` — 6/6.
+- [x] 2.11. Публикация SPA на `/app` (Vaadin пока на `/`), Dockerfile multi-stage:
       web build -> jar.
+      Выполнено 2026-11-19: SPA публикуется на `/app`, Vaadin остаётся на `/`;
+      multi-stage `Dockerfile` (node:24 `npm ci`/`npm run build` -> JDK 25
+      `bootJar -PskipWebBuild` -> JRE 25); `web/dist` попадает в
+      `BOOT-INF/classes/static/app`; обновлены `.dockerignore` и README.
+      Проверено: `npm run typecheck/lint/build`, `:bot:bootJar`, содержимое jar,
+      `SpaWebConfigurationTest` — 6/6 (через JUnit Platform Launcher из-за
+      лимита длины командной строки Windows).
 
 **Готово, когда:** web-версия на `/app` полностью повторяет текущий функционал
 и ей можно пользоваться с телефона в браузере.
