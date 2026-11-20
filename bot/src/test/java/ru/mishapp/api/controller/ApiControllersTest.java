@@ -189,7 +189,7 @@ class ApiControllersTest {
     void shouldPageHistory() throws Exception {
         when(accessService.requireAccount(10L))
                 .thenReturn(new Account(10L, "Семья", true, Set.of()));
-        when(historyService.page(10L, 1, 2)).thenReturn(new HistoryPage(
+        when(historyService.page(10L, 1, 2, "date", "desc")).thenReturn(new HistoryPage(
                 List.of(new AccountHistory(
                         5L, 10L, -100, 1400, LocalDateTime.of(2026, 11, 16, 12, 0), "Продукты")),
                 1, 2, 3, 2));
@@ -234,7 +234,6 @@ class ApiControllersTest {
                         .type(Type.MONTHLY)
                         .pass(0)
                         .nextDay(LocalDate.of(2026, 12, 1))
-                        .active(true)
                         .build());
 
         mockMvc.perform(post("/api/v1/accounts/10/payment-rules")
@@ -270,7 +269,6 @@ class ApiControllersTest {
                         .type(Type.MONTHLY)
                         .pass(2)
                         .nextDay(LocalDate.of(2026, 12, 1))
-                        .active(true)
                         .endDate(LocalDate.of(2027, 12, 1))
                         .build());
 
@@ -293,7 +291,7 @@ class ApiControllersTest {
                 .thenReturn(new Account(10L, "Семья", true, Set.of()));
         when(forecastService.calculateForecast(eq(10L), eq(to), any())).thenReturn(List.of(
                 new CalcItem(to, 1400, new PeriodicChangeRuleDto(
-                        7L, "Интернет", -500, "MONTHLY", 0, to, true, null))));
+                        7L, "Интернет", -500, "MONTHLY", 0, to, null))));
 
         mockMvc.perform(post("/api/v1/accounts/10/forecast")
                         .header("Authorization", authorization)

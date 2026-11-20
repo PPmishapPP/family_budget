@@ -24,7 +24,6 @@ public class PeriodicChangeRule {
     private final Type type;
     private final int pass;
     private final LocalDate nextDay;
-    private final boolean active;
     private final LocalDate endDate;
 
     @PersistenceCreator
@@ -35,7 +34,6 @@ public class PeriodicChangeRule {
             Type type,
             int pass,
             LocalDate nextDay,
-            boolean active,
             LocalDate endDate
     ) {
         this.id = id;
@@ -45,7 +43,6 @@ public class PeriodicChangeRule {
         this.type = type;
         this.pass = pass;
         this.nextDay = nextDay;
-        this.active = active;
         this.endDate = endDate;
     }
 }

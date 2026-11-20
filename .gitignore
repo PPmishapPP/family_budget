@@ -61,6 +61,8 @@ docker/.env
 ### Web (React SPA) ###
 /web/node_modules/
 /web/dist/
+/web/test-results/
+/web/playwright-report/
 
 ### Android ###
 *.jks

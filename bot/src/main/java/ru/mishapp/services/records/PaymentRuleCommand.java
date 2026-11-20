@@ -9,7 +9,6 @@ public record PaymentRuleCommand(
         int sum,
         Type type,
         LocalDate nextDay,
-        Boolean active,
         LocalDate endDate
 ) {
 }

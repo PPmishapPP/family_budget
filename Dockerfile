@@ -3,6 +3,21 @@
 # В Docker Desktop BuildKit включён по умолчанию.
 
 # =========================================================
+# Stage 0: сборка SPA (React) в web/
+# =========================================================
+FROM node:24-alpine AS web
+
+WORKDIR /web
+
+COPY web/package.json web/package-lock.json ./
+
+RUN --mount=type=cache,target=/root/.npm npm ci
+
+COPY web/ ./
+
+RUN npm run build
+
+# =========================================================
 # Stage 1: сборка приложения (Vaadin production mode)
 # =========================================================
 FROM eclipse-temurin:25-jdk AS build
@@ -30,17 +45,19 @@ RUN --mount=type=cache,target=/root/.gradle/caches \
     --mount=type=cache,target=/root/.gradle/wrapper \
     ./gradlew :bot:dependencies --no-daemon > /dev/null 2>&1 || true
 
-# Копируем исходники модуля bot
+# Копируем исходники модуля bot и собранный SPA (упаковывается в jar)
 COPY bot/ bot/
+COPY --from=web /web/dist web/dist
 
 # Собираем исполняемый bootJar.
 # -Pvaadin.productionMode=true — сборка фронтенда Vaadin в production mode
+# -PskipWebBuild — SPA уже собран на стадии web, npm в этом образе нет
 # -x test — пропускаем тесты при сборке образа
 # --mount=type=cache — кеш Gradle и npm сохраняется между сборками на хосте
 RUN --mount=type=cache,target=/root/.gradle/caches \
     --mount=type=cache,target=/root/.gradle/wrapper \
     --mount=type=cache,target=/root/.npm \
-    ./gradlew :bot:bootJar -Pvaadin.productionMode=true --no-daemon -x test
+    ./gradlew :bot:bootJar -Pvaadin.productionMode=true -PskipWebBuild --no-daemon -x test
 
 # =========================================================
 # Stage 2: рантайм (только JRE)

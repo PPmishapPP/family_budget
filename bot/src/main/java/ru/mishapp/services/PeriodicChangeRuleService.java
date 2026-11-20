@@ -69,7 +69,6 @@ public class PeriodicChangeRuleService {
                 .type(command.type())
                 .pass(pass)
                 .nextDay(command.nextDay())
-                .active(command.active() == null || command.active())
                 .endDate(command.endDate())
                 .build();
     }

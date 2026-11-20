@@ -88,7 +88,6 @@ class AccountServiceTest {
                 .targetAccountId(accountId)
                 .name("Аренда")
                 .sum(-200)
-                .active(true)
                 .build();
 
         accountService.applyRule(rule);

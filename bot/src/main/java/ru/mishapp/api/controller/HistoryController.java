@@ -26,8 +26,10 @@ public class HistoryController {
     public PageResponse<AccountHistoryDto> history(
             @PathVariable Long accountId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "date") String sort,
+            @RequestParam(defaultValue = "desc") String direction) {
         accessService.requireAccount(accountId);
-        return mapper.toPageResponse(historyService.page(accountId, page, size));
+        return mapper.toPageResponse(historyService.page(accountId, page, size, sort, direction));
     }
 }
