@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button, Group, Modal, NumberInput, Select, Stack, Switch, TextInput } from '@mantine/core'
+import { Button, Group, Modal, NumberInput, Select, Stack, TextInput } from '@mantine/core'
 import { useEffect, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -20,7 +20,6 @@ const ruleSchema = z.object({
     (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value),
     'Укажите дату',
   ),
-  active: z.boolean(),
   endDate: z
     .string()
     .nullable()
@@ -46,7 +45,6 @@ function toFormValues(draft: PaymentRuleDraft | null): RuleFormValues {
       sum: 0,
       type: 'MONTHLY',
       nextDay: toIsoDate(new Date()),
-      active: true,
       endDate: null,
     }
   }
@@ -55,7 +53,6 @@ function toFormValues(draft: PaymentRuleDraft | null): RuleFormValues {
     sum: draft.current.sum,
     type: draft.current.type,
     nextDay: draft.current.nextDay,
-    active: draft.current.active,
     endDate: draft.current.endDate,
   }
 }
@@ -86,7 +83,6 @@ export function PaymentRuleFormModal({
       sum: values.sum,
       type: values.type,
       nextDay: values.nextDay,
-      active: values.active,
       endDate: values.endDate === '' ? null : values.endDate,
     })
   })
@@ -162,6 +158,7 @@ export function PaymentRuleFormModal({
               <TextInput
                 label="Следующий платёж"
                 type="date"
+                lang="en-GB"
                 withAsterisk
                 value={field.value}
                 onChange={(event) => field.onChange(event.currentTarget.value)}
@@ -178,6 +175,7 @@ export function PaymentRuleFormModal({
               <TextInput
                 label="Дата окончания"
                 type="date"
+                lang="en-GB"
                 description="Необязательно"
                 value={field.value ?? ''}
                 onChange={(event) =>
@@ -187,18 +185,6 @@ export function PaymentRuleFormModal({
                 }
                 onBlur={field.onBlur}
                 error={fieldState.error?.message}
-              />
-            )}
-          />
-
-          <Controller
-            control={form.control}
-            name="active"
-            render={({ field }) => (
-              <Switch
-                label="Активно"
-                checked={field.value}
-                onChange={(event) => field.onChange(event.currentTarget.checked)}
               />
             )}
           />

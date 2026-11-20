@@ -4,7 +4,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -231,7 +230,7 @@ public class PaymentsView extends VerticalLayout {
     private EditableItem createEmptyEditableItem() {
         // Создаем новый DTO с пустыми/дефолтными значениями
         PeriodicChangeRuleDto emptyDto = new PeriodicChangeRuleDto(null, "",
-                0, Type.MONTHLY.toString(), 0, LocalDate.now(), true, null);
+                0, Type.MONTHLY.toString(), 0, LocalDate.now(), null);
 
         // Создаем EditableItem с одинаковыми current и original (пустыми)
         EditableItem editableItem = new EditableItem(emptyDto);
@@ -367,19 +366,6 @@ public class PaymentsView extends VerticalLayout {
                 .setFlexGrow(1)
                 .setEditorComponent(this::createNextDayEditor);
 
-        grid.addComponentColumn(item -> {
-                    boolean active = item.currentDto.active();
-                    String flag = active ? "Активно" : "Неактивно";
-                    if (item.isModified() && item.originalDto.active() != active) {
-                        flag = "✎ " + flag;
-                    }
-                    return new Span(flag);
-                })
-                .setHeader("Активность")
-                .setAutoWidth(true)
-                .setFlexGrow(1)
-                .setEditorComponent(this::createActiveCheckBox);
-
         grid.addColumn(item -> item.getCurrentDto().endDate())
                 .setHeader("Последний платеж")
                 .setSortable(true)
@@ -460,25 +446,6 @@ public class PaymentsView extends VerticalLayout {
             }
             return null;
         });
-    }
-
-    private Component createActiveCheckBox(EditableItem item) {
-        Checkbox activeCheckbox = new Checkbox();
-        // Устанавливаем текущее значение из элемента
-        activeCheckbox.setValue(item.currentDto.active());
-        // Добавляем слушатель для сохранения изменений
-        activeCheckbox.addValueChangeListener(event -> {
-            // Обновляем значение в DTO
-            item.setIsActive(event.getValue());
-
-            // Обновляем отображение в гриде
-            grid.getDataProvider().refreshItem(item);
-            grid.getEditor().editItem(item);
-        });
-        // Опционально: делаем чекбокс доступным только в режиме редактирования
-        activeCheckbox.setEnabled(editMode); // если у вас есть такой флаг
-
-        return activeCheckbox;
     }
 
     private ComboBox<Type> createTypeEditor(EditableItem item) {
@@ -808,11 +775,6 @@ public class PaymentsView extends VerticalLayout {
                 this.currentDto = currentDto.withName(newName);
                 this.modified = !newName.equals(originalDto.name());
             }
-        }
-
-        public void setIsActive(boolean isActive) {
-            this.currentDto = currentDto.withActive(isActive);
-            this.modified = isActive != originalDto.active();
         }
     }
 }

@@ -131,7 +131,7 @@ export function RulesTable({
   }
 
   return (
-    <Table.ScrollContainer minWidth={760}>
+    <Table.ScrollContainer minWidth={680}>
       <Table striped highlightOnHover withTableBorder withColumnBorders verticalSpacing="xs">
         <Table.Thead>
           <Table.Tr>
@@ -139,7 +139,6 @@ export function RulesTable({
             {renderSortableHeader('sum', 'Сумма', 'right')}
             {renderSortableHeader('type', 'Тип')}
             {renderSortableHeader('nextDay', 'Следующий платёж')}
-            <Table.Th>Активность</Table.Th>
             {renderSortableHeader('endDate', 'Последний платёж')}
             <Table.Th ta="right">Действия</Table.Th>
           </Table.Tr>
@@ -153,13 +152,12 @@ export function RulesTable({
             const nameMarked = original !== null && original.name !== rule.name
             const sumMarked = original !== null && original.sum !== rule.sum
             const typeMarked = original !== null && original.type !== rule.type
-            const activeMarked = original !== null && original.active !== rule.active
             const name = rule.name || '—'
             return (
               <Table.Tr
                 key={draft.key}
                 style={{
-                  opacity: marked ? 0.6 : rule.active ? 1 : 0.6,
+                  opacity: marked ? 0.6 : undefined,
                   backgroundColor: marked ? 'var(--mantine-color-red-0)' : undefined,
                   textDecoration: marked ? 'line-through' : undefined,
                 }}
@@ -185,12 +183,6 @@ export function RulesTable({
                       </Badge>
                     )}
                   </Group>
-                </Table.Td>
-                <Table.Td>
-                  <Badge color={rule.active ? 'teal' : 'gray'} variant="light">
-                    {activeMarked ? '✎ ' : ''}
-                    {rule.active ? 'Активно' : 'Неактивно'}
-                  </Badge>
                 </Table.Td>
                 <Table.Td>{formatDate(rule.endDate)}</Table.Td>
                 <Table.Td>

@@ -12,7 +12,6 @@ public record PeriodicChangeRuleDto(
         String type,
         int pass,
         LocalDate nextDay,
-        boolean active,
         LocalDate endDate
 ) {
 

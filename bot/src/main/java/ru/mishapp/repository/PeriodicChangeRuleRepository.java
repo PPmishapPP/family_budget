@@ -22,7 +22,6 @@ public interface PeriodicChangeRuleRepository extends CrudRepository<PeriodicCha
                 r.type as type,
                 r.pass as pass,
                 r.next_day as next_day,
-                r.active as active,
                 r.end_date as end_date
             FROM periodic_change_rule r
             WHERE r.target_account_id = :accountId""")

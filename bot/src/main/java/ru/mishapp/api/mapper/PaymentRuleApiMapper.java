@@ -17,7 +17,6 @@ public class PaymentRuleApiMapper {
                 request.sum(),
                 request.type(),
                 request.nextDay(),
-                request.active(),
                 request.endDate()
         );
     }
@@ -30,7 +29,6 @@ public class PaymentRuleApiMapper {
                 rule.getType(),
                 rule.getPass(),
                 rule.getNextDay(),
-                rule.isActive(),
                 rule.getEndDate()
         );
     }
@@ -43,7 +41,6 @@ public class PaymentRuleApiMapper {
                 Type.valueOf(dto.type()),
                 dto.pass(),
                 dto.nextDay(),
-                dto.active(),
                 dto.endDate()
         );
     }

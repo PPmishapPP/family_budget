@@ -320,7 +320,6 @@ export interface components {
             type: "MONTHLY" | "WEEKLY" | "DAILY" | "ONE" | "YEARLY";
             /** Format: date */
             nextDay: string;
-            active?: boolean;
             /** Format: date */
             endDate?: string;
         };
@@ -336,7 +335,6 @@ export interface components {
             pass?: number;
             /** Format: date */
             nextDay?: string;
-            active?: boolean;
             /** Format: date */
             endDate?: string;
         };

@@ -64,7 +64,6 @@ export function useForecastMutation(accountId: number | null) {
             sum: rule.sum,
             type: rule.type,
             nextDay: rule.nextDay,
-            active: rule.active,
             endDate: rule.endDate ?? undefined,
           })),
         },

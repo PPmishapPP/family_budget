@@ -34,7 +34,7 @@ class ForecastServiceTest {
         LocalDate day4 = LocalDate.of(2026, 11, 20);
         LocalDate to = day4;
         PeriodicChangeRuleDto rule = new PeriodicChangeRuleDto(
-                1L, "Доход", 100, "MONTHLY", 0, day1, true, null);
+                1L, "Доход", 100, "MONTHLY", 0, day1, null);
 
         when(forecastCalculator.calc(10L, to)).thenReturn(List.of(
                 new CalcItem(day1, 100, rule),

@@ -38,7 +38,6 @@ describe('PaymentRuleFormModal', () => {
       name: 'Аренда',
       sum: -1500,
       type: 'MONTHLY',
-      active: true,
       endDate: null,
     })
   })

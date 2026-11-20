@@ -25,7 +25,6 @@ public class ForecastApiMapper {
                 request.type().name(),
                 0,
                 request.nextDay(),
-                request.active() == null || request.active(),
                 request.endDate()
         );
     }

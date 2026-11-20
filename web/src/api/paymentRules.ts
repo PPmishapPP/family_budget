@@ -17,7 +17,6 @@ export type PaymentRule = {
   type: PaymentRuleType
   pass: number
   nextDay: string
-  active: boolean
   endDate: string | null
 }
 
@@ -26,7 +25,6 @@ export type PaymentRuleInput = {
   sum: number
   type: PaymentRuleType
   nextDay: string
-  active: boolean
   endDate: string | null
 }
 
@@ -63,7 +61,6 @@ function normalizeRule(dto: PaymentRuleDto): PaymentRule | null {
     type: dto.type,
     pass: dto.pass ?? 0,
     nextDay: dto.nextDay,
-    active: dto.active ?? false,
     endDate: dto.endDate ?? null,
   }
 }
@@ -74,7 +71,6 @@ function toRequestBody(input: PaymentRuleInput): PaymentRuleRequest {
     sum: input.sum,
     type: input.type,
     nextDay: input.nextDay,
-    active: input.active,
     endDate: input.endDate ?? undefined,
   }
 }
@@ -85,7 +81,6 @@ export function toRuleInput(rule: PaymentRule): PaymentRuleInput {
     sum: rule.sum,
     type: rule.type,
     nextDay: rule.nextDay,
-    active: rule.active,
     endDate: rule.endDate,
   }
 }
@@ -118,7 +113,6 @@ export function areRuleInputsEqual(a: PaymentRuleInput, b: PaymentRuleInput): bo
     a.sum === b.sum &&
     a.type === b.type &&
     a.nextDay === b.nextDay &&
-    a.active === b.active &&
     (a.endDate ?? null) === (b.endDate ?? null)
   )
 }

@@ -25,7 +25,7 @@ public class ForecastCalculator {
 
     public List<CalcItem> calc(Long accountId, LocalDate to) {
         Map<LocalDate, List<PeriodicChangeRuleDto>> map = periodicChangeRuleRepository.findAllRuleDtos(accountId).stream()
-                .filter(PeriodicChangeRuleDto::active)
+                .filter(ForecastCalculator::isWithinEndDate)
                 .collect(Collectors.groupingBy(PeriodicChangeRuleDto::nextDay));
 
         AccountHistory last = accountHistoryRepository.findLastByAccountId(accountId);
@@ -35,11 +35,15 @@ public class ForecastCalculator {
 
     public List<CalcItem> calc(List<PeriodicChangeRuleDto> dtos, Long accountId, LocalDate to) {
         Map<LocalDate, List<PeriodicChangeRuleDto>> map = dtos.stream()
-                .filter(PeriodicChangeRuleDto::active)
+                .filter(ForecastCalculator::isWithinEndDate)
                 .collect(Collectors.groupingBy(PeriodicChangeRuleDto::nextDay));
         AccountHistory last = accountHistoryRepository.findLastByAccountId(accountId);
         int balance = last == null ? 0 : last.getBalance();
         return calc(map, balance, to);
+    }
+
+    private static boolean isWithinEndDate(PeriodicChangeRuleDto rule) {
+        return rule.endDate() == null || !rule.nextDay().isAfter(rule.endDate());
     }
 
     private List<CalcItem> calc(Map<LocalDate, List<PeriodicChangeRuleDto>> map, int balance, LocalDate to) {

@@ -11,7 +11,6 @@ public record PaymentRuleDto(
         Type type,
         int pass,
         LocalDate nextDay,
-        boolean active,
         LocalDate endDate
 ) {
 }

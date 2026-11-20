@@ -17,7 +17,6 @@ public record PaymentRuleRequest(
         Type type,
         @NotNull(message = "Дата следующего платежа обязательна")
         LocalDate nextDay,
-        Boolean active,
         LocalDate endDate
 ) {
 }

@@ -19,9 +19,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,12 +39,12 @@ class PeriodicChangeRuleServiceTest {
     private final LocalDate nextDay = LocalDate.of(2026, 12, 1);
 
     @Test
-    void shouldCreateActiveRuleWithZeroPass() {
+    void shouldCreateRuleWithZeroPass() {
         when(repository.save(any(PeriodicChangeRule.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         PeriodicChangeRule result = service.create(10L, new PaymentRuleCommand(
-                "  Интернет  ", -500, Type.MONTHLY, nextDay, null, null));
+                "  Интернет  ", -500, Type.MONTHLY, nextDay, null));
 
         ArgumentCaptor<PeriodicChangeRule> captor = ArgumentCaptor.forClass(PeriodicChangeRule.class);
         verify(repository).save(captor.capture());
@@ -55,20 +53,19 @@ class PeriodicChangeRuleServiceTest {
         assertEquals("Интернет", saved.getName());
         assertEquals(10L, saved.getTargetAccountId());
         assertEquals(0, saved.getPass());
-        assertTrue(saved.isActive());
         assertEquals(Type.MONTHLY, saved.getType());
         assertEquals("Интернет", result.getName());
     }
 
     @Test
     void shouldPreservePassWhenUpdatingRule() {
-        PeriodicChangeRule existing = rule(7L, 3, true);
+        PeriodicChangeRule existing = rule(7L, 3);
         when(repository.findByIdAndTargetAccountId(7L, 10L)).thenReturn(Optional.of(existing));
         when(repository.save(any(PeriodicChangeRule.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         PeriodicChangeRule result = service.update(10L, 7L, new PaymentRuleCommand(
-                "Интернет", -600, Type.MONTHLY, nextDay, false,
+                "Интернет", -600, Type.MONTHLY, nextDay,
                 LocalDate.of(2027, 12, 1)));
 
         ArgumentCaptor<PeriodicChangeRule> captor = ArgumentCaptor.forClass(PeriodicChangeRule.class);
@@ -77,15 +74,14 @@ class PeriodicChangeRuleServiceTest {
 
         assertEquals(7L, saved.getId());
         assertEquals(3, saved.getPass());
-        assertFalse(saved.isActive());
         assertEquals(-600, saved.getSum());
         assertEquals(LocalDate.of(2027, 12, 1), saved.getEndDate());
-        assertFalse(result.isActive());
+        assertEquals(-600, result.getSum());
     }
 
     @Test
     void shouldDeleteOwnedRule() {
-        PeriodicChangeRule existing = rule(7L, 0, true);
+        PeriodicChangeRule existing = rule(7L, 0);
         when(repository.findByIdAndTargetAccountId(7L, 10L)).thenReturn(Optional.of(existing));
 
         service.delete(10L, 7L);
@@ -104,7 +100,7 @@ class PeriodicChangeRuleServiceTest {
     void shouldMapLegacyRuleDtosToApiDtos() {
         when(repository.findAllRuleDtos(10L)).thenReturn(List.of(
                 new PeriodicChangeRuleDto(7L, "Интернет", -500, "MONTHLY", 2,
-                        nextDay, true, null)));
+                        nextDay, null)));
 
         List<PeriodicChangeRuleDto> result = service.findAll(10L);
 
@@ -113,7 +109,7 @@ class PeriodicChangeRuleServiceTest {
         assertEquals(2, result.getFirst().pass());
     }
 
-    private PeriodicChangeRule rule(Long id, int pass, boolean active) {
+    private PeriodicChangeRule rule(Long id, int pass) {
         return PeriodicChangeRule.builder()
                 .id(id)
                 .targetAccountId(10L)
@@ -122,7 +118,6 @@ class PeriodicChangeRuleServiceTest {
                 .type(Type.MONTHLY)
                 .pass(pass)
                 .nextDay(nextDay)
-                .active(active)
                 .build();
     }
 }

@@ -21,7 +21,6 @@ public class PeriodicChangeRuleMapper {
         builder.sum(dto.sum());
         builder.pass(dto.pass());
         builder.nextDay(dto.nextDay());
-        builder.active(dto.active());
         builder.endDate(dto.endDate());
         builder.targetAccountId(accountId);
         return builder.build();

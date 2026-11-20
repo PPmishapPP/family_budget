@@ -36,14 +36,8 @@ public class RuleExecuteService {
         accountService.applyRule(entity);
         LocalDate nextDay = entity.getType().next(entity.getNextDay(), entity.getPass());
 
-        if (nextDay == null) {
-            periodicChangeRuleRepository.save(entity.withActive(false));
-        } else if (!nextDay.isEqual(entity.getNextDay())) {
-            entity = entity.withNextDay(nextDay);
-            if (entity.getEndDate() != null && entity.getEndDate().isBefore(nextDay)) {
-                entity = entity.withActive(false);
-            }
-            periodicChangeRuleRepository.save(entity);
+        if (nextDay != null && !nextDay.isEqual(entity.getNextDay())) {
+            periodicChangeRuleRepository.save(entity.withNextDay(nextDay));
         }
     }
 }
