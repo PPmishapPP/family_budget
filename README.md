@@ -30,7 +30,9 @@
    docker compose -f docker/docker-compose.yml ps
    ```
 
-4. Приложение будет доступно по адресу: http://localhost:8080
+4. Приложение будет доступно по адресам:
+   - Vaadin UI: http://localhost:8080/
+   - SPA (React): http://localhost:8080/app/
 
    База данных PostgreSQL — на порту 5432 внутри сети Docker (наружу не проброшен).
 
@@ -162,8 +164,9 @@ docker compose -f docker/docker-compose.yml up -d --force-recreate
 ### Как это устроено
 
 - [`Dockerfile`](Dockerfile) — многоступенчатая сборка:
-  - **Stage 1 (build)**: JDK 26 + Gradle, сборка `bootJar` с Vaadin в production mode (`-Pvaadin.productionMode=true`), тесты пропущены (`-x test`);
-  - **Stage 2 (runtime)**: JRE 26, запуск под непривилегированным пользователем.
+  - **Stage 0 (web)**: Node 24 + `npm ci`, сборка SPA в `web/dist`;
+  - **Stage 1 (build)**: JDK 25 + Gradle, `bootJar` с Vaadin в production mode (`-Pvaadin.productionMode=true`); SPA упаковывается в `BOOT-INF/classes/static/app` (`-PskipWebBuild`), тесты пропущены (`-x test`);
+  - **Stage 2 (runtime)**: JRE 25, запуск под непривилегированным пользователем.
 - [`docker/docker-compose.yml`](docker/docker-compose.yml) — сервисы:
   - `db` — PostgreSQL 16 (данные в volume `db_data`);
   - `bot` — само приложение, зависит от готовности БД (healthcheck).
@@ -183,5 +186,9 @@ docker compose -f docker/docker-compose.yml up -d --force-recreate
 ```bash
 ./gradlew :bot:bootRun
 ```
+
+`bootJar`/`bootRun` собирают SPA через `npm run build` в `web/` (нужен Node 24+).
+Пропустить сборку SPA: `-PskipWebBuild` (тогда используется уже готовый `web/dist`).
+Разработка SPA с hot-reload: `npm run dev` в `web/` — Vite проксирует `/api` на `:8080`.
 
 Для локального запуска задайте переменные окружения `DATASOURCE_USERNAME` и `DATASOURCE_PASSWORD` (см. [`application.yml`](bot/src/main/resources/application.yml)).
