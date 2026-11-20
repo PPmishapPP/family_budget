@@ -68,13 +68,17 @@ jar {
 def webDir = file("$rootDir/web")
 def webDistDir = file("$webDir/dist")
 def isWindows = System.getProperty('os.name').toLowerCase().contains('windows')
+def npmExec = isWindows ? 'npm.cmd' : 'npm'
+def npmAvailable = (System.getenv('PATH') ?: '')
+        .split(File.pathSeparator)
+        .any { it && new File(it, npmExec).isFile() }
 
 tasks.register('webBuild', Exec) {
     group = 'build'
-    description = 'Собирает SPA из web/ (npm run build); пропускается с -PskipWebBuild'
-    onlyIf { !project.hasProperty('skipWebBuild') }
+    description = 'Собирает SPA из web/ (npm run build); пропускается с -PskipWebBuild или если npm не найден'
+    onlyIf { !project.hasProperty('skipWebBuild') && npmAvailable }
     workingDir = webDir
-    commandLine(isWindows ? 'npm.cmd' : 'npm', 'run', 'build')
+    commandLine(npmExec, 'run', 'build')
     inputs.file(new File(webDir, 'package.json'))
     inputs.file(new File(webDir, 'package-lock.json'))
     inputs.file(new File(webDir, 'index.html'))
@@ -91,14 +95,11 @@ tasks.register('stageWebApp', Sync) {
     into layout.buildDirectory.dir('generated/webapp/static/app')
 
     doFirst {
+        if (!npmAvailable) {
+            logger.warn("npm (${npmExec}) не найден в PATH — SPA не пересобирается, используется web/dist")
+        }
         if (!new File(webDistDir, 'index.html').exists()) {
-            def message = "Сборка SPA не найдена (${webDistDir}/index.html): соберите SPA (npm run build в web/) " +
-                    "или запустите сборку с -PskipWebBuild, чтобы собрать jar без SPA"
-            if (project.hasProperty('skipWebBuild')) {
-                logger.warn(message)
-            } else {
-                throw new GradleException(message)
-            }
+            logger.warn("Сборка SPA не найдена (${webDistDir}/index.html): /app/ будет отдавать ранее собранный бандл (если он есть)")
         }
     }
 }
