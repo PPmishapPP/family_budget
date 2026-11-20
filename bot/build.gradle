@@ -103,13 +103,15 @@ tasks.register('stageWebApp', Sync) {
     }
 }
 
+tasks.named('processResources') {
+    dependsOn 'stageWebApp'
+    from(layout.buildDirectory.dir('generated/webapp'))
+}
+
 bootJar {
     // Фиксированное имя артефакта для Docker-образа
     archiveFileName = 'app.jar'
 
     dependsOn 'stageWebApp'
-    from(layout.buildDirectory.dir('generated/webapp')) {
-        into 'BOOT-INF/classes'
-    }
 }
 
