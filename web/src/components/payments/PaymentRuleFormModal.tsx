@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 
-import type { PaymentRule, PaymentRuleInput } from '../../api/paymentRules.ts'
+import type { PaymentRuleDraft, PaymentRuleInput } from '../../api/paymentRules.ts'
 import { toIsoDate } from '../../lib/format.ts'
 import { PAYMENT_RULE_TYPE_OPTIONS, PAYMENT_RULE_TYPES } from '../../lib/paymentRules.ts'
 import type { PaymentRuleType } from '../../lib/paymentRules.ts'
@@ -34,14 +34,13 @@ type RuleFormValues = z.infer<typeof ruleSchema>
 
 type PaymentRuleFormModalProps = {
   opened: boolean
-  rule: PaymentRule | null
-  submitting: boolean
+  draft: PaymentRuleDraft | null
   onClose: () => void
-  onSubmit: (input: PaymentRuleInput) => Promise<void>
+  onSubmit: (input: PaymentRuleInput) => void
 }
 
-function toFormValues(rule: PaymentRule | null): RuleFormValues {
-  if (!rule) {
+function toFormValues(draft: PaymentRuleDraft | null): RuleFormValues {
+  if (!draft) {
     return {
       name: '',
       sum: 0,
@@ -52,23 +51,22 @@ function toFormValues(rule: PaymentRule | null): RuleFormValues {
     }
   }
   return {
-    name: rule.name,
-    sum: rule.sum,
-    type: rule.type,
-    nextDay: rule.nextDay,
-    active: rule.active,
-    endDate: rule.endDate,
+    name: draft.current.name,
+    sum: draft.current.sum,
+    type: draft.current.type,
+    nextDay: draft.current.nextDay,
+    active: draft.current.active,
+    endDate: draft.current.endDate,
   }
 }
 
 export function PaymentRuleFormModal({
   opened,
-  rule,
-  submitting,
+  draft,
   onClose,
   onSubmit,
 }: PaymentRuleFormModalProps) {
-  const defaults = useMemo(() => toFormValues(rule), [rule])
+  const defaults = useMemo(() => toFormValues(draft), [draft])
   const form = useForm<RuleFormValues>({
     resolver: zodResolver(ruleSchema),
     defaultValues: defaults,
@@ -80,8 +78,10 @@ export function PaymentRuleFormModal({
     }
   }, [opened, defaults, form])
 
-  const submit = form.handleSubmit(async (values) => {
-    await onSubmit({
+  const isNew = draft === null || draft.id === null
+
+  const submit = form.handleSubmit((values) => {
+    onSubmit({
       name: values.name.trim(),
       sum: values.sum,
       type: values.type,
@@ -95,12 +95,9 @@ export function PaymentRuleFormModal({
     <Modal
       opened={opened}
       onClose={onClose}
-      title={rule ? 'Изменить правило' : 'Новое правило'}
+      title={isNew ? 'Новое правило' : 'Изменить правило'}
       size="md"
       centered
-      closeOnClickOutside={!submitting}
-      closeOnEscape={!submitting}
-      withCloseButton={!submitting}
     >
       <form onSubmit={submit}>
         <Stack gap="sm">
@@ -207,12 +204,10 @@ export function PaymentRuleFormModal({
           />
 
           <Group justify="flex-end" mt="md">
-            <Button variant="default" onClick={onClose} disabled={submitting}>
+            <Button variant="default" onClick={onClose}>
               Отмена
             </Button>
-            <Button type="submit" loading={submitting}>
-              {rule ? 'Сохранить' : 'Добавить'}
-            </Button>
+            <Button type="submit">{isNew ? 'Добавить' : 'Сохранить'}</Button>
           </Group>
         </Stack>
       </form>

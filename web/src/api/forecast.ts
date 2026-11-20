@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 
 import { api } from './client.ts'
 import type { components } from './client.ts'
+import type { PaymentRuleInput } from './paymentRules.ts'
 import { readProblemMessage } from './problem.ts'
 
 type ForecastItemDto = components['schemas']['ForecastItemDto']
@@ -43,15 +44,30 @@ function normalizeIncomeItem(dto: IncomeForecastItemDto): IncomeForecastItem | n
   }
 }
 
+export type ForecastInput = {
+  to: string
+  rules?: PaymentRuleInput[]
+}
+
 export function useForecastMutation(accountId: number | null) {
   return useMutation({
-    mutationFn: async (to: string) => {
+    mutationFn: async ({ to, rules }: ForecastInput) => {
       if (accountId === null) {
         throw new Error('Счёт не выбран')
       }
       const { data, response } = await api.POST('/api/v1/accounts/{accountId}/forecast', {
         params: { path: { accountId } },
-        body: { to },
+        body: {
+          to,
+          rules: rules?.map((rule) => ({
+            name: rule.name,
+            sum: rule.sum,
+            type: rule.type,
+            nextDay: rule.nextDay,
+            active: rule.active,
+            endDate: rule.endDate ?? undefined,
+          })),
+        },
       })
       if (!response.ok || !data) {
         throw new Error(await readProblemMessage(response, 'Не удалось выполнить прогноз'))

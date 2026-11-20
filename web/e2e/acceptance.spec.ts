@@ -130,6 +130,41 @@ test('B-08 мобильная вёрстка: гамбургер виден', as
   await expect(page.getByRole('button', { name: 'Меню' })).toBeVisible()
 })
 
+async function ensureEditMode(page: Page) {
+  const viewMode = page.getByRole('button', { name: 'Режим просмотра' })
+  if (await viewMode.isVisible()) {
+    return
+  }
+  await page.getByRole('button', { name: 'Режим редактирования' }).click()
+}
+
+async function saveRules(page: Page) {
+  await page.getByRole('button', { name: 'Сохранить', exact: true }).click()
+  await expect(page.getByText('Изменения сохранены').first()).toBeVisible()
+}
+
+async function createRule(page: Page, name: string, sum: string, type?: string) {
+  await ensureEditMode(page)
+  await page.getByRole('button', { name: 'Добавить' }).first().click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Название').fill(name)
+  if (type) {
+    await dialog.getByLabel('Тип').click()
+    await page.getByRole('option', { name: type, exact: true }).click()
+  }
+  await dialog.getByLabel(/Сумма, ₽/).fill(sum)
+  await dialog.getByRole('button', { name: 'Добавить' }).click()
+  await saveRules(page)
+}
+
+async function deleteRule(page: Page, name: string) {
+  await ensureEditMode(page)
+  await page.getByRole('button', { name: `Удалить ${name}` }).click()
+  const confirm = page.getByRole('dialog').filter({ hasText: 'Удаление правила' })
+  await confirm.getByRole('button', { name: 'Удалить', exact: true }).click()
+  await saveRules(page)
+}
+
 test('C-01/C-02/C-03 таблица правил: колонки и русские типы', async ({ page }) => {
   await login(page)
   const name = unique('Колонки')
@@ -148,43 +183,29 @@ test('C-01/C-02/C-03 таблица правил: колонки и русски
   const row = page.getByRole('row', { name: new RegExp(name) })
   await expect(row.getByText('Ежегодно')).toBeVisible()
   await expect(page.getByText('Текущий баланс')).toBeVisible()
-  await page.getByRole('button', { name: `Удалить ${name}` }).click()
-  await page.getByRole('button', { name: 'Удалить', exact: true }).click()
-  await expect(page.getByText('Правило удалено')).toBeVisible()
+  await deleteRule(page, name)
 })
-
-async function createRule(page: Page, name: string, sum: string, type?: string) {
-  await page.getByRole('button', { name: 'Добавить' }).first().click()
-  const dialog = page.getByRole('dialog')
-  await dialog.getByLabel('Название').fill(name)
-  if (type) {
-    await dialog.getByLabel('Тип').click()
-    await page.getByRole('option', { name: type, exact: true }).click()
-  }
-  await dialog.getByLabel(/Сумма, ₽/).fill(sum)
-  await dialog.getByRole('button', { name: 'Добавить' }).click()
-  await expect(page.getByText('Правило добавлено')).toBeVisible()
-}
 
 test('C-07/C-11 создание правила, значения по умолчанию', async ({ page }) => {
   await login(page)
   const name = unique('Правило')
+  await ensureEditMode(page)
   await page.getByRole('button', { name: 'Добавить' }).first().click()
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByLabel('Тип')).toHaveValue('Ежемесячно')
   await dialog.getByLabel('Название').fill(name)
   await dialog.getByLabel(/Сумма, ₽/).fill('-500')
   await dialog.getByRole('button', { name: 'Добавить' }).click()
-  await expect(page.getByText('Правило добавлено')).toBeVisible()
+  await expect(page.getByRole('cell', { name, exact: true })).toBeVisible()
+  await saveRules(page)
   await expect(page.getByRole('cell', { name, exact: true })).toBeVisible()
 
-  await page.getByRole('button', { name: `Удалить ${name}` }).click()
-  await page.getByRole('button', { name: 'Удалить', exact: true }).click()
-  await expect(page.getByText('Правило удалено')).toBeVisible()
+  await deleteRule(page, name)
 })
 
 test('C-09 валидация: пустое название', async ({ page }) => {
   await openPayments(page)
+  await ensureEditMode(page)
   await page.getByRole('button', { name: 'Добавить' }).first().click()
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('button', { name: 'Добавить' }).click()
@@ -202,7 +223,7 @@ test('C-12 удаление требует подтверждения и отм�
   await expect(page.getByRole('cell', { name, exact: true })).toBeVisible()
   await page.getByRole('button', { name: `Удалить ${name}` }).click()
   await confirm.getByRole('button', { name: 'Удалить' }).click()
-  await expect(page.getByText('Правило удалено')).toBeVisible()
+  await saveRules(page)
   await expect(page.getByRole('cell', { name, exact: true })).toHaveCount(0)
 })
 
@@ -210,31 +231,29 @@ test('C-13 «Выполнить» создаёт запись в истории'
   await login(page)
   const name = unique('К выполнению')
   await createRule(page, name, '-250')
+  await page.getByRole('button', { name: 'Режим просмотра' }).click()
   await page.getByRole('button', { name: `Выполнить ${name}` }).click()
   await expect(page.getByText(`Платёж «${name}» выполнен`)).toBeVisible()
   await page.getByRole('link', { name: 'История платежей' }).click()
   await expect(page.getByText(name, { exact: true })).toBeVisible()
   await page.getByRole('link', { name: 'План платежей' }).click()
-  await page.getByRole('button', { name: `Удалить ${name}` }).click()
-  await page.getByRole('button', { name: 'Удалить', exact: true }).click()
-  await expect(page.getByText('Правило удалено')).toBeVisible()
+  await deleteRule(page, name)
 })
 
 test('C-15 просроченное правило подсвечено', async ({ page }) => {
   await login(page)
   const name = unique('Просроченное')
+  await ensureEditMode(page)
   await page.getByRole('button', { name: 'Добавить' }).first().click()
   const dialog = page.getByRole('dialog')
   await dialog.getByLabel('Название').fill(name)
   await dialog.getByLabel(/Сумма, ₽/).fill('-100')
   await dialog.getByLabel('Следующий платёж').fill('2020-01-01')
   await dialog.getByRole('button', { name: 'Добавить' }).click()
-  await expect(page.getByText('Правило добавлено')).toBeVisible()
   const row = page.getByRole('row', { name: new RegExp(name) })
   await expect(row.getByText('К оплате')).toBeVisible()
-  await page.getByRole('button', { name: `Удалить ${name}` }).click()
-  await page.getByRole('button', { name: 'Удалить', exact: true }).click()
-  await expect(page.getByText('Правило удалено')).toBeVisible()
+  await saveRules(page)
+  await deleteRule(page, name)
 })
 
 test('C-16/C-17/C-18 разовый платёж: расход отрицательный', async ({ page }) => {
@@ -267,6 +286,8 @@ test('C-17/C-19 нулевая сумма не сохраняется', async ({
 
 test('D-01/D-02/D-03 прогноз: диапазон, быстрые кнопки, активация', async ({ page }) => {
   await login(page)
+  const name = unique('Прогноз')
+  await createRule(page, name, '-100')
   await page.getByRole('button', { name: 'Выполнить прогноз платежей' }).click()
   const dialog = page.getByRole('dialog')
   const calculate = dialog.getByRole('button', { name: 'Рассчитать прогноз' })
@@ -275,10 +296,13 @@ test('D-01/D-02/D-03 прогноз: диапазон, быстрые кнопк
   await expect(dialog.getByLabel('Дата окончания расчёта')).not.toHaveValue('')
   await expect(calculate).toBeEnabled()
   await dialog.getByRole('button', { name: 'Отмена' }).click()
+  await deleteRule(page, name)
 })
 
 test('D-06/D-07 прогноз возвращает таблицу или пустое сообщение', async ({ page }) => {
   await login(page)
+  const name = unique('Прогноз пуст')
+  await createRule(page, name, '-100')
   await page.getByRole('button', { name: 'Выполнить прогноз платежей' }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('button', { name: '+1 месяц' }).click()
@@ -287,10 +311,13 @@ test('D-06/D-07 прогноз возвращает таблицу или пус
     dialog.getByRole('columnheader', { name: 'Операция' }).or(dialog.getByText('Прогноз пуст')),
   ).toBeVisible()
   await dialog.getByRole('button', { name: 'Отмена' }).click()
+  await deleteRule(page, name)
 })
 
 test('E-01/E-03 расчёт дохода: кнопки и колонки', async ({ page }) => {
   await login(page)
+  const name = unique('Доход')
+  await createRule(page, name, '1000')
   await page.getByRole('button', { name: 'Расчет дохода' }).click()
   const dialog = page.getByRole('dialog')
   const calculate = dialog.getByRole('button', { name: 'Рассчитать доход' })
@@ -302,6 +329,7 @@ test('E-01/E-03 расчёт дохода: кнопки и колонки', asyn
     dialog.getByRole('columnheader', { name: 'Прибавка' }).or(dialog.getByText('Расчёт пуст')),
   ).toBeVisible()
   await dialog.getByRole('button', { name: 'Отмена' }).click()
+  await deleteRule(page, name)
 })
 
 test('F-01/F-03/F-04 история: колонки и окраска сумм', async ({ page }) => {

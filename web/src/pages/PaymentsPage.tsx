@@ -1,18 +1,25 @@
 import { Button, Group, Paper, Skeleton, Stack, Text, Title } from '@mantine/core'
 import { IconCash, IconChartLine, IconPlus, IconTrendingUp } from '@tabler/icons-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useAccount } from '../accounts/accountContext.ts'
 import { useBalanceQuery } from '../api/balance.ts'
 import type { InstantPaymentInput } from '../api/payments.ts'
 import { useRegisterPaymentMutation } from '../api/payments.ts'
-import type { PaymentRule, PaymentRuleInput } from '../api/paymentRules.ts'
+import type {
+  PaymentRule,
+  PaymentRuleDraft,
+  PaymentRuleInput,
+  PaymentRulesBatch,
+} from '../api/paymentRules.ts'
 import {
-  useCreatePaymentRuleMutation,
-  useDeletePaymentRuleMutation,
+  createDraftFromInput,
+  createDraftFromRule,
+  isDraftModified,
+  isDraftPending,
   useExecutePaymentRuleMutation,
   usePaymentRulesQuery,
-  useUpdatePaymentRuleMutation,
+  useSavePaymentRulesMutation,
 } from '../api/paymentRules.ts'
 import { EmptyState } from '../components/states/EmptyState.tsx'
 import { ErrorState } from '../components/states/ErrorState.tsx'
@@ -29,7 +36,7 @@ import { notifyError, notifySuccess } from '../lib/notify.ts'
 
 type RuleModalState = {
   opened: boolean
-  rule: PaymentRule | null
+  draftKey: string | null
 }
 
 export function PaymentsPage() {
@@ -39,72 +46,154 @@ export function PaymentsPage() {
   const balanceQuery = useBalanceQuery(accountId)
   const rulesQuery = usePaymentRulesQuery(accountId)
 
-  const createRule = useCreatePaymentRuleMutation(accountId)
-  const updateRule = useUpdatePaymentRuleMutation(accountId)
-  const deleteRule = useDeletePaymentRuleMutation(accountId)
+  const saveRules = useSavePaymentRulesMutation(accountId)
   const executeRule = useExecutePaymentRuleMutation(accountId)
   const registerPayment = useRegisterPaymentMutation(accountId)
 
+  const [drafts, setDrafts] = useState<PaymentRuleDraft[]>([])
+  const [editMode, setEditMode] = useState(false)
+  const [stateAccountId, setStateAccountId] = useState(accountId)
   const [ruleModal, setRuleModal] = useState<RuleModalState>({
     opened: false,
-    rule: null,
+    draftKey: null,
   })
   const [instantOpened, setInstantOpened] = useState(false)
   const [forecastOpened, setForecastOpened] = useState(false)
   const [incomeOpened, setIncomeOpened] = useState(false)
 
-  const rules = rulesQuery.data ?? []
-
-  function openCreateRule() {
-    setRuleModal({ opened: true, rule: null })
+  if (stateAccountId !== accountId) {
+    setStateAccountId(accountId)
+    setDrafts([])
+    setEditMode(false)
+    setRuleModal({ opened: false, draftKey: null })
   }
 
-  function openEditRule(rule: PaymentRule) {
-    setRuleModal({ opened: true, rule })
+  const hasChanges = drafts.some(isDraftPending)
+  const hasChangesRef = useRef(hasChanges)
+  const lastSyncedRef = useRef<{ accountId: number | null; data: PaymentRule[] | undefined }>({
+    accountId: null,
+    data: undefined,
+  })
+
+  useEffect(() => {
+    hasChangesRef.current = hasChanges
+  }, [hasChanges])
+
+  useEffect(() => {
+    const data = rulesQuery.data
+    if (!data) {
+      return
+    }
+    const last = lastSyncedRef.current
+    const accountChanged = last.accountId !== accountId
+    if (!accountChanged && last.data === data) {
+      return
+    }
+    if (!accountChanged && hasChangesRef.current) {
+      return
+    }
+    lastSyncedRef.current = { accountId, data }
+    setDrafts(data.map(createDraftFromRule))
+  }, [accountId, rulesQuery.data])
+
+  const activeDrafts = drafts.filter((draft) => !draft.markedForDeletion)
+  const canForecast = activeDrafts.length > 0
+  const modalDraft =
+    ruleModal.draftKey === null
+      ? null
+      : (drafts.find((draft) => draft.key === ruleModal.draftKey) ?? null)
+
+  function openCreateRule() {
+    setRuleModal({ opened: true, draftKey: null })
+  }
+
+  function openEditRule(draft: PaymentRuleDraft) {
+    setRuleModal({ opened: true, draftKey: draft.key })
   }
 
   function closeRuleModal() {
-    setRuleModal({ opened: false, rule: null })
+    setRuleModal({ opened: false, draftKey: null })
   }
 
-  async function handleRuleSubmit(input: PaymentRuleInput) {
+  function handleRuleSubmit(input: PaymentRuleInput) {
+    if (ruleModal.draftKey === null) {
+      const draft = createDraftFromInput(input)
+      setDrafts((current) => [draft, ...current])
+    } else {
+      const key = ruleModal.draftKey
+      setDrafts((current) =>
+        current.map((draft) =>
+          draft.key === key ? { ...draft, current: input, markedForDeletion: false } : draft,
+        ),
+      )
+    }
+    closeRuleModal()
+  }
+
+  async function handleExecuteRule(draft: PaymentRuleDraft) {
+    if (draft.id === null) {
+      return
+    }
     try {
-      if (ruleModal.rule) {
-        await updateRule.mutateAsync({ ruleId: ruleModal.rule.id, input })
-        notifySuccess('Правило обновлено')
-      } else {
-        await createRule.mutateAsync(input)
-        notifySuccess('Правило добавлено')
-      }
-      closeRuleModal()
+      await executeRule.mutateAsync(draft.id)
+      notifySuccess(`Платёж «${draft.current.name}» выполнен`)
     } catch (error) {
       notifyError(errorMessage(error))
     }
   }
 
-  async function handleExecuteRule(rule: PaymentRule) {
-    try {
-      await executeRule.mutateAsync(rule.id)
-      notifySuccess(`Платёж «${rule.name}» выполнен`)
-    } catch (error) {
-      notifyError(errorMessage(error))
+  function handleDeleteRule(draft: PaymentRuleDraft) {
+    if (draft.id === null) {
+      setDrafts((current) => current.filter((item) => item.key !== draft.key))
+      return
     }
-  }
-
-  function handleDeleteRule(rule: PaymentRule) {
     confirmAction({
       title: 'Удаление правила',
-      message: `Удалить правило «${rule.name}»?`,
+      message: `Удалить правило «${draft.current.name}»?`,
       confirmLabel: 'Удалить',
-      onConfirm: async () => {
-        try {
-          await deleteRule.mutateAsync(rule.id)
-          notifySuccess('Правило удалено')
-        } catch (error) {
-          notifyError(errorMessage(error))
-        }
+      onConfirm: () => {
+        setDrafts((current) =>
+          current.map((item) =>
+            item.key === draft.key ? { ...item, markedForDeletion: true } : item,
+          ),
+        )
       },
     })
+  }
+
+  function handleCancelChanges() {
+    lastSyncedRef.current = { accountId, data: rulesQuery.data }
+    setDrafts((rulesQuery.data ?? []).map(createDraftFromRule))
+    notifySuccess('Изменения отменены')
+  }
+
+  async function handleSaveChanges() {
+    const batch: PaymentRulesBatch = { creates: [], updates: [], deletes: [] }
+    for (const draft of drafts) {
+      if (draft.markedForDeletion) {
+        if (draft.id !== null) {
+          batch.deletes.push(draft.id)
+        }
+        continue
+      }
+      if (draft.id === null) {
+        batch.creates.push(draft.current)
+        continue
+      }
+      if (isDraftModified(draft)) {
+        batch.updates.push({ ruleId: draft.id, input: draft.current })
+      }
+    }
+
+    try {
+      await saveRules.mutateAsync(batch)
+      const fresh = await rulesQuery.refetch()
+      lastSyncedRef.current = { accountId, data: fresh.data }
+      setDrafts((fresh.data ?? []).map(createDraftFromRule))
+      notifySuccess('Изменения сохранены')
+    } catch (error) {
+      notifyError(errorMessage(error))
+    }
   }
 
   async function handleInstantPayment(input: InstantPaymentInput) {
@@ -133,8 +222,6 @@ export function PaymentsPage() {
   const balance = balanceQuery.data ?? 0
   const executingId =
     executeRule.isPending && executeRule.variables !== undefined ? executeRule.variables : null
-  const deletingId =
-    deleteRule.isPending && deleteRule.variables !== undefined ? deleteRule.variables : null
 
   return (
     <Stack gap="lg">
@@ -165,7 +252,7 @@ export function PaymentsPage() {
       </Group>
 
       <Group gap="xs" wrap="wrap">
-        <Button leftSection={<IconPlus size={18} />} onClick={openCreateRule}>
+        <Button leftSection={<IconPlus size={18} />} onClick={openCreateRule} disabled={!editMode}>
           Добавить
         </Button>
         <Button
@@ -179,6 +266,7 @@ export function PaymentsPage() {
           variant="light"
           leftSection={<IconChartLine size={18} />}
           onClick={() => setForecastOpened(true)}
+          disabled={!canForecast}
         >
           Выполнить прогноз платежей
         </Button>
@@ -186,8 +274,29 @@ export function PaymentsPage() {
           variant="light"
           leftSection={<IconTrendingUp size={18} />}
           onClick={() => setIncomeOpened(true)}
+          disabled={!canForecast}
         >
           Расчет дохода
+        </Button>
+        <Button
+          variant={editMode ? 'light' : 'filled'}
+          onClick={() => setEditMode((current) => !current)}
+        >
+          {editMode ? 'Режим просмотра' : 'Режим редактирования'}
+        </Button>
+        <Button
+          variant="default"
+          onClick={handleCancelChanges}
+          disabled={!hasChanges || saveRules.isPending}
+        >
+          Отменить изменения
+        </Button>
+        <Button
+          onClick={() => void handleSaveChanges()}
+          loading={saveRules.isPending}
+          disabled={!hasChanges || saveRules.isPending}
+        >
+          Сохранить
         </Button>
       </Group>
 
@@ -198,31 +307,36 @@ export function PaymentsPage() {
           description={errorMessage(rulesQuery.error, 'Не удалось загрузить правила платежей.')}
           onRetry={() => void rulesQuery.refetch()}
         />
-      ) : rules.length === 0 ? (
+      ) : drafts.length === 0 ? (
         <EmptyState
           title="Правил пока нет"
           description="Добавьте первое правило, чтобы планировать платежи."
           action={
-            <Button leftSection={<IconPlus size={18} />} onClick={openCreateRule}>
+            <Button
+              leftSection={<IconPlus size={18} />}
+              onClick={() => {
+                setEditMode(true)
+                openCreateRule()
+              }}
+            >
               Добавить
             </Button>
           }
         />
       ) : (
         <RulesTable
-          rules={rules}
+          drafts={drafts}
+          editMode={editMode}
           executingId={executingId}
-          deletingId={deletingId}
           onEdit={openEditRule}
-          onExecute={(rule) => void handleExecuteRule(rule)}
+          onExecute={(draft) => void handleExecuteRule(draft)}
           onDelete={handleDeleteRule}
         />
       )}
 
       <PaymentRuleFormModal
         opened={ruleModal.opened}
-        rule={ruleModal.rule}
-        submitting={createRule.isPending || updateRule.isPending}
+        draft={modalDraft}
         onClose={closeRuleModal}
         onSubmit={handleRuleSubmit}
       />
@@ -238,6 +352,7 @@ export function PaymentsPage() {
       <ForecastModal
         opened={forecastOpened}
         accountId={accountId}
+        rules={activeDrafts.map((draft) => draft.current)}
         onClose={() => setForecastOpened(false)}
       />
 

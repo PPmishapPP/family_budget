@@ -3,6 +3,7 @@ import { IconAlertTriangle, IconCalendarStats } from '@tabler/icons-react'
 import { useState } from 'react'
 
 import { useForecastMutation } from '../../api/forecast.ts'
+import type { PaymentRuleInput } from '../../api/paymentRules.ts'
 import { formatDate, formatRub, toIsoDate } from '../../lib/format.ts'
 import { EmptyState } from '../states/EmptyState.tsx'
 import { LoadingState } from '../states/LoadingState.tsx'
@@ -10,6 +11,7 @@ import { LoadingState } from '../states/LoadingState.tsx'
 type ForecastModalProps = {
   opened: boolean
   accountId: number | null
+  rules: PaymentRuleInput[]
   onClose: () => void
 }
 
@@ -39,7 +41,7 @@ function firstDayAfterYears(years: number): string {
   return toIsoDate(date)
 }
 
-export function ForecastModal({ opened, accountId, onClose }: ForecastModalProps) {
+export function ForecastModal({ opened, accountId, rules, onClose }: ForecastModalProps) {
   const [date, setDate] = useState('')
   const forecast = useForecastMutation(accountId)
 
@@ -60,7 +62,7 @@ export function ForecastModal({ opened, accountId, onClose }: ForecastModalProps
 
   function handleCalculate() {
     if (canCalculate) {
-      forecast.mutate(date)
+      forecast.mutate({ to: date, rules })
     }
   }
 

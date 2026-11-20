@@ -6,16 +6,10 @@ import { renderWithProviders } from '../../test/render.tsx'
 import { PaymentRuleFormModal } from './PaymentRuleFormModal.tsx'
 
 function setup() {
-  const onSubmit = vi.fn().mockResolvedValue(undefined)
+  const onSubmit = vi.fn()
   const onClose = vi.fn()
   renderWithProviders(
-    <PaymentRuleFormModal
-      opened
-      rule={null}
-      submitting={false}
-      onClose={onClose}
-      onSubmit={onSubmit}
-    />,
+    <PaymentRuleFormModal opened draft={null} onClose={onClose} onSubmit={onSubmit} />,
   )
   return { user: userEvent.setup(), onSubmit, onClose }
 }
