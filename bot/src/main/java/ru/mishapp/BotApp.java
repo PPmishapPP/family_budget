@@ -11,6 +11,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class BotApp {
     
     public static void main(String[] args) {
-        SpringApplication.run(BotApp.class);
+        SpringApplication.run(BotApp.class, args);
     }
 }

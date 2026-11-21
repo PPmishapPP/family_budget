@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = SpaProbeController.class)
@@ -21,23 +21,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         SecurityAutoConfiguration.class,
         ServletWebSecurityAutoConfiguration.class
 })
-@Import({SpaWebConfiguration.class, SpaSecurityConfiguration.class})
+@Import({SpaWebConfiguration.class, SecurityConfiguration.class})
 class SpaWebConfigurationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    void servesIndexHtmlForAppRoot() throws Exception {
-        mockMvc.perform(get("/app/"))
+    void servesIndexHtmlForRoot() throws Exception {
+        // MockMvc не выполняет forward, поэтому проверяем сам forward на index.html.
+        mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
-                .andExpect(content().string(containsString("spa-index")));
+                .andExpect(forwardedUrl("/index.html"));
     }
 
     @Test
     void fallsBackToIndexForClientRoute() throws Exception {
-        mockMvc.perform(get("/app/history"))
+        mockMvc.perform(get("/history"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
                 .andExpect(content().string(containsString("spa-index")));
@@ -45,22 +45,15 @@ class SpaWebConfigurationTest {
 
     @Test
     void servesExistingAsset() throws Exception {
-        mockMvc.perform(get("/app/assets/app.js"))
+        mockMvc.perform(get("/assets/app.js"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("spa-asset")));
     }
 
     @Test
     void returnsNotFoundForMissingAsset() throws Exception {
-        mockMvc.perform(get("/app/assets/missing.js"))
+        mockMvc.perform(get("/assets/missing.js"))
                 .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void redirectsAppWithoutTrailingSlash() throws Exception {
-        mockMvc.perform(get("/app"))
-                .andExpect(status().isFound())
-                .andExpect(redirectedUrl("/app/"));
     }
 
     @Test
@@ -68,5 +61,11 @@ class SpaWebConfigurationTest {
         mockMvc.perform(get("/api/v1/ping"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("pong"));
+    }
+
+    @Test
+    void doesNotServeIndexForUnknownApiRoute() throws Exception {
+        mockMvc.perform(get("/api/v1/unknown"))
+                .andExpect(status().isNotFound());
     }
 }

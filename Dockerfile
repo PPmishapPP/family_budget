@@ -18,7 +18,7 @@ COPY web/ ./
 RUN npm run build
 
 # =========================================================
-# Stage 1: сборка приложения (Vaadin production mode)
+# Stage 1: сборка Spring Boot приложения
 # =========================================================
 FROM eclipse-temurin:25-jdk AS build
 
@@ -50,14 +50,13 @@ COPY bot/ bot/
 COPY --from=web /web/dist web/dist
 
 # Собираем исполняемый bootJar.
-# -Pvaadin.productionMode=true — сборка фронтенда Vaadin в production mode
 # -PskipWebBuild — SPA уже собран на стадии web, npm в этом образе нет
 # -x test — пропускаем тесты при сборке образа
 # --mount=type=cache — кеш Gradle и npm сохраняется между сборками на хосте
 RUN --mount=type=cache,target=/root/.gradle/caches \
     --mount=type=cache,target=/root/.gradle/wrapper \
     --mount=type=cache,target=/root/.npm \
-    ./gradlew :bot:bootJar -Pvaadin.productionMode=true -PskipWebBuild --no-daemon -x test
+    ./gradlew :bot:bootJar -PskipWebBuild --no-daemon -x test
 
 # =========================================================
 # Stage 2: рантайм (только JRE)

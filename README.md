@@ -1,194 +1,126 @@
 # Family Budget
 
-Приложение для управления семейным бюджетом (Spring Boot + Vaadin + PostgreSQL + Flyway).
+Приложение для управления семейным бюджетом: Spring Boot REST API + React SPA,
+PostgreSQL, Flyway, JWT-аутентификация. Android-клиент использует тот же API.
 
-## Запуск в Docker
+## Стек
 
-### Требования
+| Слой | Технологии |
+|---|---|
+| Backend | Java 25, Spring Boot 4.1.1, Spring Data JDBC, Spring Security, Flyway, springdoc |
+| Web | React 19, TypeScript, Vite, Mantine, TanStack Query, React Hook Form + Zod |
+| БД | PostgreSQL 17 |
+| Деплой | systemd + Nginx + нативный PostgreSQL (без Docker) |
 
-- Docker Engine (с Docker Compose v2), запущенный daemon (например, Docker Desktop)
+## Структура
 
-### Шаги
-
-1. Создайте файл переменных окружения (при необходимости):
-
-   ```bash
-   cp docker/.env.example docker/.env
-   ```
-
-   Значения по умолчанию: пользователь БД `usr`, пароль `usr`. Для продакшена обязательно измените пароль!
-
-2. Запустите сборку и старт контейнеров:
-
-   ```bash
-   docker compose -f docker/docker-compose.yml up -d --build
-   ```
-
-3. Проверьте статус:
-
-   ```bash
-   docker compose -f docker/docker-compose.yml ps
-   ```
-
-4. Приложение будет доступно по адресам:
-   - Vaadin UI: http://localhost:8080/
-   - SPA (React): http://localhost:8080/app/
-
-   База данных PostgreSQL — на порту 5432 внутри сети Docker (наружу не проброшен).
-
-### Управление
-
-```bash
-# Просмотр логов приложения
-docker compose -f docker/docker-compose.yml logs -f bot
-
-# Остановка контейнеров
-docker compose -f docker/docker-compose.yml down
-
-# Остановка с удалением тома БД (все данные будут потеряны!)
-docker compose -f docker/docker-compose.yml down -v
-
-# Пересборка после изменений кода
-docker compose -f docker/docker-compose.yml up -d --build
+```text
+bot/       # backend: домен, REST API /api/v1, раздача SPA
+web/       # React SPA (Vite)
+android/   # Android-клиент (отдельный Gradle-проект)
+docs/      # планы, решения, OpenAPI
+deploy/    # systemd, Nginx, скрипты установки и деплоя
 ```
 
-## Деплой на слабый сервер
+SPA собирается в `web/dist` и упаковывается в `bootJar` (`static/`), поэтому
+отдельный фронтенд-сервер не нужен. Nginx терминирует TLS и проксирует запросы
+на `127.0.0.1:8080`.
 
-Сервер, на котором живёт приложение, слабый и не справляется со сборкой образа
-(Vaadin production mode — тяжёлая сборка). Поэтому образ собирается локально,
-сохраняется в файл, переносится по SSH и загружается на сервере.
+## Локальный запуск
 
-Схема:
-
-```mermaid
-flowchart LR
-    A[Локальная машина<br/>собираем образ] --> B[docker save<br/>образ -> tar файл]
-    B --> C[scp<br/>tar на сервер]
-    C --> D[На сервере<br/>docker load]
-    D --> E[docker compose up -d<br/>без --build]
-```
-
-### Шаги
-
-1. **Сборка образа локально** (из корня проекта):
-
-   ```bash
-   docker build -t family_budget:latest .
-   ```
-
-2. **Сохранение образа в файл:**
-
-   ```bash
-   docker save family_budget:latest -o family_budget.tar
-   ```
-
-3. **Копирование на сервер по SSH:**
-
-   ```bash
-   scp -C family_budget.tar user@server:/home/user/family_budget/
-   ```
-
-   Флаг `-C` включает сжатие при передаче. При первом деплое так же переносится
-   конфигурация compose:
-
-   ```bash
-   scp -C family_budget.tar root@mishapp.ru:family_budget.tar
-   ```
-
-4. **На сервере — загрузка образа и запуск:**
-
-   ```bash
-   ssh user@server
-   cd /home/user/family_budget
-   ```
-
-   При первом деплое создать `.env` из примера (обязательно сменить пароль БД):
-
-   ```bash
-   cp docker/.env.example docker/.env
-   nano docker/.env   # измените DATASOURCE_PASSWORD
-   ```
-
-   Загрузить образ и запустить контейнеры (важно: **без** `--build`, чтобы не
-   собирать на слабом сервере):
-
-   ```bash
-   docker load -i family_budget.tar
-   docker images | grep family_budget      # проверка, что образ на месте
-   docker compose -f docker/docker-compose.yml up -d --force-recreate
-   ```
-
-   `--force-recreate` страхует от случая, когда compose не замечает, что образ
-   с тегом `latest` заменился. Том `db_data` (PostgreSQL) при этом не
-   пересоздаётся — данные и миграции Flyway сохраняются.
-
-   Проверка:
-
-   ```bash
-   docker compose -f docker/docker-compose.yml ps
-   docker compose -f docker/docker-compose.yml logs -f bot
-   ```
-
-### Кеширование зависимостей при сборке
-
-[`Dockerfile`](Dockerfile:1) использует BuildKit cache mounts
-(`--mount=type=cache`): кеш Gradle и npm сохраняется на хосте между сборками
-и не скачивается заново при каждом `docker build`. Правка Java-кода или
-фронтенда не приводит к повторной загрузке зависимостей.
-
-Слои сборки выстроены так, чтобы зависимости загружались до копирования
-исходников (`COPY bot/ bot/`), поэтому изменения в коде не инвалидируют слой
-с зависимостями.
-
-Требуется Docker с BuildKit (в Docker Desktop включён по умолчанию).
-
-Для принудительной очистки кеша (например, при подозрении на битый кеш):
+Требования: JDK 25, Node 24+, PostgreSQL 17 (или Docker только для БД).
 
 ```bash
-docker builder prune   # или docker system prune
-```
+# БД (если нет локального PostgreSQL)
+docker run -d --name family_budget_db \
+  -e POSTGRES_DB=family_budget \
+  -e POSTGRES_USER=usr \
+  -e POSTGRES_PASSWORD=usr \
+  -p 5432:5432 postgres:17
 
-### Обновление приложения
+# переменные окружения
+export DATASOURCE_URL=jdbc:postgresql://localhost:5432/family_budget
+export DATASOURCE_USERNAME=usr
+export DATASOURCE_PASSWORD=usr
 
-Повторяются шаги 1 → 3 → 4:
-
-```bash
-docker build -t family_budget:latest .
-docker save family_budget:latest -o family_budget.tar
-scp -C family_budget.tar user@server:/home/user/family_budget/
-# на сервере:
-docker load -i family_budget.tar
-docker compose -f docker/docker-compose.yml up -d --force-recreate
-```
-
-### Как это устроено
-
-- [`Dockerfile`](Dockerfile) — многоступенчатая сборка:
-  - **Stage 0 (web)**: Node 24 + `npm ci`, сборка SPA в `web/dist`;
-  - **Stage 1 (build)**: JDK 25 + Gradle, `bootJar` с Vaadin в production mode (`-Pvaadin.productionMode=true`); SPA упаковывается в `BOOT-INF/classes/static/app` (`-PskipWebBuild`), тесты пропущены (`-x test`);
-  - **Stage 2 (runtime)**: JRE 25, запуск под непривилегированным пользователем.
-- [`docker/docker-compose.yml`](docker/docker-compose.yml) — сервисы:
-  - `db` — PostgreSQL 16 (данные в volume `db_data`);
-  - `bot` — само приложение, зависит от готовности БД (healthcheck).
-
-### Конфигурация
-
-| Переменная окружения | Описание | По умолчанию |
-|---|---|---|
-| `DATASOURCE_URL` | JDBC URL базы данных | `jdbc:postgresql://localhost:5432/family_budget` (для локального запуска) |
-| `DATASOURCE_USERNAME` | Пользователь БД | `usr` |
-| `DATASOURCE_PASSWORD` | Пароль БД | `usr` |
-
-В Docker Compose `DATASOURCE_URL` автоматически указывает на контейнер `db`.
-
-### Локальный запуск без Docker
-
-```bash
+# backend + собранная SPA на http://localhost:8080/
 ./gradlew :bot:bootRun
 ```
 
-`bootJar`/`bootRun` собирают SPA через `npm run build` в `web/` (нужен Node 24+).
-Пропустить сборку SPA: `-PskipWebBuild` (тогда используется уже готовый `web/dist`).
-Разработка SPA с hot-reload: `npm run dev` в `web/` — Vite проксирует `/api` на `:8080`.
+`bootRun`/`bootJar` сами собирают SPA через `npm run build`, если npm найден в
+`PATH`. Пропустить сборку SPA: `-PskipWebBuild` (используется готовый `web/dist`).
 
-Для локального запуска задайте переменные окружения `DATASOURCE_USERNAME` и `DATASOURCE_PASSWORD` (см. [`application.yml`](bot/src/main/resources/application.yml)).
+Разработка SPA с hot-reload:
+
+```bash
+cd web
+npm ci
+npm run dev        # http://localhost:5173, /api проксируется на :8080
+```
+
+Полезные команды:
+
+```bash
+./gradlew :bot:test                 # backend-тесты (нужен Docker для Testcontainers)
+cd web && npm test                  # Vitest
+cd web && npm run lint && npm run typecheck
+cd web && npm run test:e2e          # Playwright (нужны E2E_LOGIN/E2E_PASSWORD)
+```
+
+Документация API: `http://localhost:8080/swagger-ui.html`, контракт —
+[`docs/openapi.json`](docs/openapi.json).
+
+## Сборка артефакта
+
+```bash
+cd web
+npm ci
+npm run build
+cd ..
+./gradlew :bot:bootJar -PskipWebBuild -x test
+# результат: bot/build/libs/app.jar
+```
+
+CI (GitHub Actions) собирает SPA, запускает тесты и публикует `app.jar` как
+artifact: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+## Деплой
+
+Прод — `mishapp.ru`: Nginx (TLS) → Spring Boot под systemd → нативный
+PostgreSQL. Docker на сервере не используется.
+
+Полный runbook: [`deploy/README.md`](deploy/README.md). Кратко:
+
+```bash
+scp -C bot/build/libs/app.jar root@mishapp.ru:/opt/family-budget/incoming/app.jar
+ssh root@mishapp.ru "family-budget-deploy /opt/family-budget/incoming/app.jar"
+```
+
+Скрипт деплоя хранит релизы, переключает симлинк, проверяет
+`/actuator/health` и откатывается при ошибке. Автодеплой — workflow
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+
+### Конфигурация
+
+| Переменная | Описание | По умолчанию |
+|---|---|---|
+| `DATASOURCE_URL` | JDBC URL | `jdbc:postgresql://localhost:5432/family_budget_v3` |
+| `DATASOURCE_USERNAME` | Пользователь БД | — |
+| `DATASOURCE_PASSWORD` | Пароль БД | — |
+| `JWT_SECRET` | Секрет подписи JWT, **обязателен в проде** | dev-значение |
+| `CORS_ALLOWED_ORIGINS` | Разрешённые origin для `/api/**` | `http://localhost:5173` |
+
+`server.forward-headers-strategy=framework` включён, чтобы за Nginx корректно
+работали `X-Forwarded-Proto` и флаг `Secure` у refresh-cookie.
+
+## Docker (опционально)
+
+`Dockerfile` и `docker/docker-compose.yml` оставлены для локального запуска или
+альтернативного хостинга:
+
+```bash
+docker compose -f docker/docker-compose.yml up -d --build
+```
+
+Для прода этот путь больше не используется — сборка на слабом сервере не
+запускается, а нативный запуск экономит ~135 МБ RAM.

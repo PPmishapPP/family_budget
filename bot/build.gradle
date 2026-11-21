@@ -1,21 +1,13 @@
 plugins {
     id 'java'
     id 'org.springframework.boot' version "${springBoot}"
-    id 'com.vaadin' version "${vaadin}"
-}
-
-vaadin {
-    // Отключаем оптимизацию бандла для production (рекомендуется)
-    optimizeBundle = false
-
-    // Эти свойства будут переопределены через параметры командной строки
-    productionMode = false
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
@@ -24,8 +16,6 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    implementation "com.vaadin:vaadin-spring-boot-starter:${vaadin}"
-    developmentOnly 'com.vaadin:vaadin-dev'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
@@ -33,36 +23,14 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     testImplementation 'org.testcontainers:testcontainers-postgresql'
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
-repositories {
-    maven { url = 'https://maven.vaadin.com/vaadin-addons' }
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "com.vaadin:vaadin-bom:${vaadin}"
-    }
-}
-
 tasks.named('test') {
     useJUnitPlatform()
-}
-
-jar {
-    dependsOn('vaadinBuildFrontend')
-    manifest {
-        attributes "Main-Class": "ru.mishapp.BotApp"
-    }
-
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
 }
 
 def webDir = file("$rootDir/web")
@@ -89,17 +57,17 @@ tasks.register('webBuild', Exec) {
 
 tasks.register('stageWebApp', Sync) {
     group = 'build'
-    description = 'Готовит собранный SPA для упаковки в bootJar (classpath static/app)'
+    description = 'Готовит собранный SPA для упаковки в bootJar (classpath static)'
     dependsOn 'webBuild'
     from webDistDir
-    into layout.buildDirectory.dir('generated/webapp/static/app')
+    into layout.buildDirectory.dir('generated/webapp/static')
 
     doFirst {
         if (!npmAvailable) {
             logger.warn("npm (${npmExec}) не найден в PATH — SPA не пересобирается, используется web/dist")
         }
         if (!new File(webDistDir, 'index.html').exists()) {
-            logger.warn("Сборка SPA не найдена (${webDistDir}/index.html): /app/ будет отдавать ранее собранный бандл (если он есть)")
+            logger.warn("Сборка SPA не найдена (${webDistDir}/index.html): / будет отдавать ранее собранный бандл (если он есть)")
         }
     }
 }
@@ -110,7 +78,7 @@ tasks.named('processResources') {
 }
 
 bootJar {
-    // Фиксированное имя артефакта для Docker-образа
+    // Фиксированное имя артефакта для деплоя
     archiveFileName = 'app.jar'
 
     dependsOn 'stageWebApp'

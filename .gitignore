@@ -35,34 +35,21 @@ bin/
 ### VS Code ###
 .vscode/
 
-### Docker ###
+### Локальные секреты ###
 docker/.env
+deploy/env
 /family_budget.tar
-
-### Mac OS ###
-.DS_Store
-/.idea/
 /bot/src/main/resources/application.properties
-/frontend/
-/target/
-/bot/src/main/frontend/
-/bot/node_modules
 
-### Vaadin generated at repository root (legacy leftovers) ###
-/src/
-/package.json
-/package-lock.json
-/tsconfig.json
-/types.d.ts
-/vite.config.ts
-/vite.generated.ts
-/node_modules/
+### OS ###
+.DS_Store
 
 ### Web (React SPA) ###
 /web/node_modules/
 /web/dist/
 /web/test-results/
 /web/playwright-report/
+/web/coverage/
 
 ### Android ###
 *.jks

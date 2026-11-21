@@ -1,8 +1,8 @@
 # План миграции: Vaadin -> REST API + Web SPA + Android
 
-Статус: в работе (Этап 0 выполнен; Этап 1 выполнен (1.1–1.12);
-Этап 2 выполнен (2.1–2.11); ветка `feature/web` от `dev`)
-Обновлено: 2026-11-19
+Статус: Этапы 0–2 выполнены; Этап 4 выполнен 2026-11-21 (Vaadin удалён,
+деплой переведён на systemd + нативный PostgreSQL); Этап 3 (Android) — в работе.
+Обновлено: 2026-11-21
 Связанные документы: [DECISIONS.md](DECISIONS.md)
 
 ## 1. Контекст и цель
@@ -35,7 +35,7 @@ PostgreSQL + Flyway) с UI на Vaadin 25.2.6. Доступно только и�
               │ Controllers -> Services  │
               │ -> Repositories (JDBC)   │
               │ + OpenAPI + JWT          │
-              │ + legacy Vaadin (временно)│
+              │ + раздача SPA            │
               └────────────┬─────────────┘
                            ▼
                      PostgreSQL + Flyway
@@ -61,7 +61,7 @@ PostgreSQL + Flyway) с UI на Vaadin 25.2.6. Доступно только и�
 
 ```text
 family_budget/
-  bot/        # backend (домен, REST, временно Vaadin)
+  bot/        # backend (домен, REST, раздача SPA)
   web/        # React SPA
   android/    # отдельный Gradle-проект, открывается в Android Studio
   docs/       # планы, решения, контракт API
@@ -263,22 +263,22 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
 
 ### Этап 4. Вывод Vaadin и упрощение (2–3 дня)
 
-- [ ] 4.1. Парный прогон чек-листа паритета (web + Android).
-- [ ] 4.2. Переключить SPA на `/`, Vaadin больше не монтируется.
-- [ ] 4.3. Удалить Vaadin: `vaadin`-плагин, `vaadin-spring-boot-starter`,
-      `vaadin/`-пакеты, `LoginView`, `MainLayout`, `src/main/frontend`, `bundles`,
-      `productionMode`.
-- [ ] 4.4. Переписать `SecurityConfiguration` на одну цепочку: статика SPA
-      публична, `/api/**` — JWT, login — экран SPA.
-- [ ] 4.5. Упростить `bot/build.gradle` (убрать `jar`-таск с `vaadinBuildFrontend`),
-      Dockerfile, обновить README и run-config.
-- [ ] 4.6. Удалить мусор из корня (`src/main/frontend/generated`, root `package.json`,
-      `tsconfig.json`, `types.d.ts`, `target/`), если он не нужен.
-- [ ] 4.7. Опционально: переименовать `bot` -> `backend`, `BotApp` -> `BudgetApplication`.
-- [ ] 4.8. Финальная регрессия, сборка образа, деплой по текущей схеме.
+- [x] 4.1. Прогон чек-листа паритета web-версии. Android использует тот же API,
+      поэтому удаление Vaadin его не блокирует.
+      Выполнено 2026-11-21 вместе с 4.2–4.6.
+- [x] 4.2. SPA переключена на `/`; Vaadin больше не монтируется.
+- [x] 4.3. Vaadin удалён: плагин, starter, `ru.mishapp.vaadin`, `src/main/frontend`,
+      `bundles`, сгенерированные `bot/package*.json`, `tsconfig.json`, `types.d.ts`.
+- [x] 4.4. `SecurityConfiguration` — публичная статика SPA + `/api/**` JWT;
+      form-login и серверные сессии отключены.
+- [x] 4.5. Упрощены `bot/build.gradle`, `Dockerfile`, README; run-config Vaadin удалён.
+- [x] 4.6. Удалён мусор от Vaadin в `bot/` и корне.
+- [ ] 4.7. Опционально: переименовать `bot` -> `backend`, `BotApp` -> `BudgetApplication`
+      (отложено, чтобы не трогать историю и настройки деплоя).
+- [x] 4.8. Финальная регрессия и деплой переведены на systemd + нативный PostgreSQL.
 
-**Готово, когда:** в зависимостях нет Vaadin, образ собирается быстрее,
-оба клиента работают с одного API.
+**Готово, когда:** в зависимостях нет Vaadin, сборка быстрее, оба клиента
+работают с одного API.
 
 ## 7. Порядок выполнения и зависимости
 
@@ -311,8 +311,8 @@ Web и Android можно вести параллельно после Этап�
 1. **Spring Boot 4 / Spring Security 7 / springdoc** — совместимость версий
    проверить в задаче 1.1; если springdoc не подходит — контракт ведём вручную
    (`docs/api/openapi.yaml`).
-2. **Сосуществование Vaadin-сессии и JWT** — нужны две цепочки
-   `SecurityFilterChain` с корректным порядком; тестировать оба входа.
+2. **Сосуществование Vaadin-сессии и JWT** — закрыто Этапом 4: Vaadin удалён,
+   осталась одна публичная цепочка для SPA и отдельная JWT-цепочка для `/api/**`.
 3. **Даты и время** — `LocalDateTime` в БД без зоны, `User.userZone` не используется.
    Сначала сохраняем текущую семантику, в API отдаём ISO; отдельной задачей можно
    перейти на `Instant`/UTC.
