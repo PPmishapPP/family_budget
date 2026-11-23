@@ -55,3 +55,21 @@ deploy/env
 *.jks
 *.keystore
 /local.properties
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/.idea/
+/android/local.properties
+/android/captures/
+
+### Vaadin leftovers (удалены, чтобы не всплывали снова) ###
+/target/
+/src/
+/package.json
+/package-lock.json
+/tsconfig.json
+/types.d.ts
+/frontend/
+
+### Vaadin generated frontend ###
+**/src/main/frontend/generated/
