@@ -5,7 +5,10 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import ru.mishapp.entity.AccountHistory;
 
-public interface AccountHistoryRepository extends CrudRepository<AccountHistory, Long> {
+import java.util.List;
+
+public interface AccountHistoryRepository extends CrudRepository<AccountHistory, Long>,
+        AccountHistoryRepositoryCustom {
 
     @Query("""
             select *
@@ -15,4 +18,17 @@ public interface AccountHistoryRepository extends CrudRepository<AccountHistory,
                                  where ah.account_id = :accountId
                                  group by ah.account_id)""")
     AccountHistory findLastByAccountId(@Param("accountId") Long accountId);
+
+    @Query("""
+            select *
+            from account_history
+            where account_id = :accountId
+            order by date_time desc, id desc""")
+    List<AccountHistory> findHistoryByAccountId(@Param("accountId") Long accountId);
+
+    @Query("""
+            select count(*)
+            from account_history
+            where account_id = :accountId""")
+    long countByAccountId(@Param("accountId") Long accountId);
 }

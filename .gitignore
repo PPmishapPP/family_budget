@@ -35,13 +35,41 @@ bin/
 ### VS Code ###
 .vscode/
 
-### Docker ###
+### Локальные секреты ###
 docker/.env
-
-### Mac OS ###
-.DS_Store
-/.idea/
+deploy/env
+/family_budget.tar
 /bot/src/main/resources/application.properties
-/frontend/
+
+### OS ###
+.DS_Store
+
+### Web (React SPA) ###
+/web/node_modules/
+/web/dist/
+/web/test-results/
+/web/playwright-report/
+/web/coverage/
+
+### Android ###
+*.jks
+*.keystore
+/local.properties
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/.idea/
+/android/local.properties
+/android/captures/
+
+### Vaadin leftovers (удалены, чтобы не всплывали снова) ###
 /target/
-/bot/src/main/frontend/
+/src/
+/package.json
+/package-lock.json
+/tsconfig.json
+/types.d.ts
+/frontend/
+
+### Vaadin generated frontend ###
+**/src/main/frontend/generated/

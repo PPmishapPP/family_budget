@@ -14,8 +14,17 @@ build/
 
 # Локальные секреты (в .env лежат реальные значения)
 docker/.env
+deploy/env
 bot/src/main/resources/application.properties
 
-# Локальные каталоги
-frontend/
-target/
+# SPA
+web/node_modules/
+web/dist/
+web/test-results/
+web/playwright-report/
+web/coverage/
+
+# Не нужно для образа
+android/
+docs/
+family_budget.tar

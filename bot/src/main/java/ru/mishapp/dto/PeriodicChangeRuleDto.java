@@ -8,12 +8,10 @@ import java.time.LocalDate;
 public record PeriodicChangeRuleDto(
         Long id,
         String name,
-        Long targetAccountId,
         int sum,
         String type,
         int pass,
         LocalDate nextDay,
-        boolean active,
         LocalDate endDate
 ) {
 

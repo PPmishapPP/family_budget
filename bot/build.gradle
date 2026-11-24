@@ -1,61 +1,193 @@
 plugins {
     id 'java'
     id 'org.springframework.boot' version "${springBoot}"
-    id 'com.vaadin' version "${vaadin}"
-}
-
-vaadin {
-    // Отключаем оптимизацию бандла для production (рекомендуется)
-    optimizeBundle = false
-
-    // Эти свойства будут переопределены через параметры командной строки
-    productionMode = false
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdoc}"
     implementation 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly 'org.postgresql:postgresql'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    implementation "com.vaadin:vaadin-spring-boot-starter:${vaadin}"
-    developmentOnly 'com.vaadin:vaadin-dev'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers-postgresql'
     testAnnotationProcessor 'org.projectlombok:lombok'
-}
-
-repositories {
-    maven { url = 'https://maven.vaadin.com/vaadin-addons' }
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "com.vaadin:vaadin-bom:${vaadin}"
-    }
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
 
-jar {
-    dependsOn('vaadinBuildFrontend')
-    manifest {
-        attributes "Main-Class": "ru.mishapp.BotApp"
-    }
+def webDir = file("$rootDir/web")
+def webDistDir = file("$webDir/dist")
+def isWindows = System.getProperty('os.name').toLowerCase().contains('windows')
+def npmExec = isWindows ? 'npm.cmd' : 'npm'
+def npmAvailable = (System.getenv('PATH') ?: '')
+        .split(File.pathSeparator)
+        .any { it && new File(it, npmExec).isFile() }
 
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+tasks.register('webBuild', Exec) {
+    group = 'build'
+    description = 'Собирает SPA из web/ (npm run build); пропускается с -PskipWebBuild или если npm не найден'
+    onlyIf { !project.hasProperty('skipWebBuild') && npmAvailable }
+    workingDir = webDir
+    commandLine(npmExec, 'run', 'build')
+    inputs.file(new File(webDir, 'package.json'))
+    inputs.file(new File(webDir, 'package-lock.json'))
+    inputs.file(new File(webDir, 'index.html'))
+    inputs.file(new File(webDir, 'vite.config.ts'))
+    inputs.dir(new File(webDir, 'src'))
+    outputs.dir webDistDir
+}
+
+tasks.register('stageWebApp', Sync) {
+    group = 'build'
+    description = 'Готовит собранный SPA для упаковки в bootJar (classpath static)'
+    dependsOn 'webBuild'
+    from webDistDir
+    into layout.buildDirectory.dir('generated/webapp/static')
+
+    doFirst {
+        if (!npmAvailable) {
+            logger.warn("npm (${npmExec}) не найден в PATH — SPA не пересобирается, используется web/dist")
+        }
+        if (!new File(webDistDir, 'index.html').exists()) {
+            logger.warn("Сборка SPA не найдена (${webDistDir}/index.html): / будет отдавать ранее собранный бандл (если он есть)")
+        }
     }
 }
 
+def androidDir = file("$rootDir/android")
+def androidSdkAvailable = new File(androidDir, 'local.properties').isFile() ||
+        System.getenv('ANDROID_HOME') ||
+        System.getenv('ANDROID_SDK_ROOT')
+def apkBuildType = (project.findProperty('apkBuildType') ?: 'release').toString()
+def apkVariantSuffix = apkBuildType.substring(0, 1).toUpperCase() + apkBuildType.substring(1)
+def apkOutputDir = new File(androidDir, "app/build/outputs/apk/${apkBuildType}")
+def apkOutputFile = new File(apkOutputDir, "app-${apkBuildType}.apk")
+def apkUnsignedFile = new File(apkOutputDir, "app-${apkBuildType}-unsigned.apk")
+def apkStagingDir = layout.buildDirectory.dir('generated/apk/static/download')
+
+// AGP не поддерживает JDK 25: для Android-сборки нужен JDK 21.
+// Ищем его в ANDROID_JAVA_HOME, текущем JAVA_HOME или ~/.jdks/*21*.
+def jdk21Home = System.getenv('ANDROID_JAVA_HOME')
+if (!jdk21Home || !new File(jdk21Home).isDirectory()) {
+    jdk21Home = (System.getProperty('java.version') ?: '').startsWith('21') ?
+            System.getProperty('java.home') : null
+}
+if (!jdk21Home) {
+    def jdksDir = new File(System.getProperty('user.home'), '.jdks')
+    if (jdksDir.isDirectory()) {
+        def candidate = jdksDir.listFiles()
+                ?.findAll { it.isDirectory() && it.name.contains('21') }
+                ?.sort { it.name }
+                ?.last()
+        if (candidate) {
+            jdk21Home = candidate.absolutePath
+        }
+    }
+}
+
+tasks.register('apkBuild', Exec) {
+    group = 'build'
+    description = 'Собирает APK (по умолчанию подписанный release) для раздачи с сайта'
+    onlyIf {
+        if (project.hasProperty('skipApkBuild')) {
+            logger.lifecycle('APK: сборка пропущена (-PskipApkBuild)')
+            return false
+        }
+        if (!androidSdkAvailable) {
+            logger.warn('APK: Android SDK не найден (android/local.properties или ANDROID_HOME) — сборка пропущена')
+            return false
+        }
+        if (!jdk21Home) {
+            logger.warn('APK: JDK 21 не найден (ANDROID_JAVA_HOME или ~/.jdks/*21*) — сборка пропущена')
+            return false
+        }
+        return true
+    }
+
+    workingDir = androidDir
+    environment 'JAVA_HOME', jdk21Home
+    def apkGradleArgs = [":app:assemble${apkVariantSuffix}", '--console=plain']
+    def apiBaseUrlProperty = project.findProperty('apiBaseUrl')
+    if (apiBaseUrlProperty) {
+        apkGradleArgs << "-PapiBaseUrl=${apiBaseUrlProperty}"
+    }
+    commandLine((isWindows ? ['cmd', '/c', 'gradlew.bat'] : ['sh', 'gradlew']) + apkGradleArgs)
+
+    inputs.property('apkBuildType', apkBuildType)
+    inputs.property('apiBaseUrl', (project.findProperty('apiBaseUrl') ?: '').toString())
+    inputs.property('keystorePath', System.getenv('ANDROID_KEYSTORE_PATH') ?: '')
+    inputs.property('keyAlias', System.getenv('ANDROID_KEY_ALIAS') ?: '')
+    doFirst {
+        // Чтобы старый подписанный APK не попал на сайт после смены/отключения подписи.
+        apkOutputFile.delete()
+        apkUnsignedFile.delete()
+    }
+    [
+            new File(androidDir, 'app/src/main'),
+            new File(androidDir, 'app/src/debug'),
+            new File(androidDir, 'app/src/release'),
+    ].findAll { it.exists() }.each { inputs.dir it }
+    [
+            'app/build.gradle.kts',
+            'build.gradle.kts',
+            'settings.gradle.kts',
+            'gradle/libs.versions.toml',
+            'gradle/wrapper/gradle-wrapper.properties',
+    ].collect { new File(androidDir, it) }.findAll { it.isFile() }.each { inputs.file it }
+    outputs.file apkOutputFile
+
+    doLast {
+        if (!apkOutputFile.isFile()) {
+            // Не раздаём APK от прошлой сборки, если подписи/сборки сейчас нет.
+            delete apkStagingDir.get().asFile
+            if (apkUnsignedFile.isFile()) {
+                logger.warn("APK: ${apkUnsignedFile.name} не подписан — задайте ANDROID_KEYSTORE_PATH, " +
+                        'ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD; ' +
+                        '/download/family-budget.apk будет недоступен')
+            } else {
+                logger.warn("APK: ${apkOutputFile.name} не найден — /download/family-budget.apk будет недоступен")
+            }
+        }
+    }
+}
+
+tasks.register('stageApk', Sync) {
+    group = 'build'
+    description = 'Кладёт APK в classpath: /download/family-budget.apk'
+    dependsOn 'apkBuild'
+    from { apkOutputFile.isFile() ? [apkOutputFile] : [] }
+    into apkStagingDir
+    rename { 'family-budget.apk' }
+}
+
+tasks.named('processResources') {
+    dependsOn 'stageWebApp', 'stageApk'
+    from(layout.buildDirectory.dir('generated/webapp'))
+    from(layout.buildDirectory.dir('generated/apk'))
+}
+
 bootJar {
-    // Фиксированное имя артефакта для Docker-образа
+    // Фиксированное имя артефакта для деплоя
     archiveFileName = 'app.jar'
+
+    dependsOn 'stageWebApp', 'stageApk'
 }
 

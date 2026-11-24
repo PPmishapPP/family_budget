@@ -1,0 +1,42 @@
+[Unit]
+Description=Family Budget (Spring Boot API + React SPA)
+Documentation=https://github.com/PPmishapPP/family_budget
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=family-budget
+Group=family-budget
+WorkingDirectory=/opt/family-budget/current
+
+# Секреты и параметры подключения (chmod 600, владелец root).
+EnvironmentFile=/etc/family-budget/env
+
+ExecStart=/usr/bin/java \
+    -Xms128m \
+    -Xmx384m \
+    -XX:MaxMetaspaceSize=160m \
+    -XX:+ExitOnOutOfMemoryError \
+    -jar /opt/family-budget/current/app.jar
+
+# 143 = SIGTERM: штатная остановка при деплое не считается ошибкой.
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+# Потолок памяти на весь JVM. Heap 384M + metaspace 160M + стек/прочее.
+MemoryMax=600M
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target
