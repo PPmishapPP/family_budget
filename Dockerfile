@@ -56,7 +56,7 @@ COPY --from=web /web/dist web/dist
 RUN --mount=type=cache,target=/root/.gradle/caches \
     --mount=type=cache,target=/root/.gradle/wrapper \
     --mount=type=cache,target=/root/.npm \
-    ./gradlew :bot:bootJar -PskipWebBuild --no-daemon -x test
+    ./gradlew :bot:bootJar -PskipWebBuild -PskipApkBuild --no-daemon -x test
 
 # =========================================================
 # Stage 2: рантайм (только JRE)

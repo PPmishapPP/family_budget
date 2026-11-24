@@ -12,6 +12,7 @@ import {
 import { useDisclosure } from '@mantine/hooks'
 import {
   IconCalendarStats,
+  IconDownload,
   IconHistory,
   IconLogout,
   IconMovie,
@@ -58,6 +59,18 @@ export function AppLayout() {
                 {user.login}
               </Text>
             )}
+            <Tooltip label="Скачать приложение для Android">
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                component="a"
+                href="/download/family-budget.apk"
+                download="family-budget.apk"
+                aria-label="Скачать приложение для Android"
+              >
+                <IconDownload size={18} />
+              </ActionIcon>
+            </Tooltip>
             <Tooltip label="Выйти">
               <ActionIcon variant="subtle" color="gray" onClick={handleLogout} aria-label="Выйти">
                 <IconLogout size={18} />

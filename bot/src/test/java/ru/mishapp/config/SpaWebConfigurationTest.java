@@ -57,6 +57,15 @@ class SpaWebConfigurationTest {
     }
 
     @Test
+    void servesApkForDownload() throws Exception {
+        // Файл лежит в статике и не должен подменяться на index.html.
+        mockMvc.perform(get("/download/family-budget.apk"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/vnd.android.package-archive"))
+                .andExpect(content().string(containsString("not-a-real-apk")));
+    }
+
+    @Test
     void doesNotInterceptApiEndpoints() throws Exception {
         mockMvc.perform(get("/api/v1/ping"))
                 .andExpect(status().isOk())
