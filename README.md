@@ -89,7 +89,8 @@ artifact: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 `bootRun`/`bootJar` также собирают APK и кладут его в `app.jar` — он раздаётся
 по адресу `/download/family-budget.apk`, а ссылка на скачивание находится в
-шапке web-приложения.
+шапке web-приложения. Подробные инструкции (требования, команды, подпись,
+проверка, CI-секреты, частые проблемы): [docs/ANDROID_APK.md](docs/ANDROID_APK.md).
 
 Для сборки APK нужны Android SDK и JDK 21 (AGP не поддерживает JDK 25):
 `ANDROID_JAVA_HOME` или каталог `~/.jdks/*21*`. Если их нет или задан
