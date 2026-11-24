@@ -83,6 +83,14 @@ docker compose -f /root/family_budget/docker/docker-compose.yml down   # без 
 | `SSH_USER` | `root` |
 | `SSH_PORT` | `22` (можно не задавать) |
 | `SSH_PRIVATE_KEY` | приватный ключ, которым вы ходите на сервер |
+| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 family-budget-release.jks` |
+| `ANDROID_KEYSTORE_PASSWORD` | пароль хранилища |
+| `ANDROID_KEY_ALIAS` | alias ключа |
+| `ANDROID_KEY_PASSWORD` | пароль ключа |
+
+Android-секреты обязательны: workflow **Deploy** отдельной job собирает
+подписанный release APK и упаковывает его в `app.jar`. Без них деплой
+завершится ошибкой, чтобы на сайте не оказалось битой ссылки.
 
 Затем запустите workflow **Deploy** (`workflow_dispatch`) для нужной ветки.
 
@@ -104,12 +112,20 @@ ssh root@mishapp.ru "family-budget-deploy /opt/family-budget/incoming/app.jar"
 5. при неудаче возвращает предыдущий релиз и перезапускает его;
 6. удаляет старые релизы, оставляя 5.
 
+Локальная сборка jar по умолчанию тоже собирает APK: нужны Android SDK и
+JDK 21, а для подписи — переменные `ANDROID_KEYSTORE_PATH`,
+`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+Если APK не нужен, добавьте `-PskipApkBuild`. На сервере Android SDK не
+требуется: APK уже лежит внутри `app.jar` и раздаётся по
+`/download/family-budget.apk`.
+
 ## 4. Проверка и откат
 
 ```bash
 systemctl status family-budget
 journalctl -u family-budget -f
 curl -s http://127.0.0.1:8080/actuator/health
+curl -sI https://mishapp.ru/download/family-budget.apk | head -1
 ls -1dt /opt/family-budget/releases/*
 readlink -f /opt/family-budget/current
 ```

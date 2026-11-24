@@ -29,6 +29,7 @@ SPA собирается в `web/dist` и упаковывается в `bootJar
 ## Локальный запуск
 
 Требования: JDK 25, Node 24+, PostgreSQL 17 (или Docker только для БД).
+Для сборки APK дополнительно нужны Android SDK и JDK 21 (см. ниже).
 
 ```bash
 # БД (если нет локального PostgreSQL)
@@ -83,6 +84,46 @@ cd ..
 
 CI (GitHub Actions) собирает SPA, запускает тесты и публикует `app.jar` как
 artifact: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+## Android APK на сайте
+
+`bootRun`/`bootJar` также собирают APK и кладут его в `app.jar` — он раздаётся
+по адресу `/download/family-budget.apk`, а ссылка на скачивание находится в
+шапке web-приложения.
+
+Для сборки APK нужны Android SDK и JDK 21 (AGP не поддерживает JDK 25):
+`ANDROID_JAVA_HOME` или каталог `~/.jdks/*21*`. Если их нет или задан
+`-PskipApkBuild`, шаг пропускается с предупреждением, а в jar попадает ранее
+собранный APK (если он есть). Локальная проверка без keystore:
+`-PapkBuildType=debug`.
+
+Release по умолчанию использует `https://mishapp.ru/`; адрес можно
+переопределить: `-PapiBaseUrl=https://host/` (обязателен завершающий слэш).
+
+Подпись release задаётся переменными окружения (keystore в git не хранится):
+
+| Переменная | Значение |
+|---|---|
+| `ANDROID_KEYSTORE_PATH` | путь к `.jks` |
+| `ANDROID_KEYSTORE_PASSWORD` | пароль хранилища |
+| `ANDROID_KEY_ALIAS` | alias ключа |
+| `ANDROID_KEY_PASSWORD` | пароль ключа |
+
+Без этих переменных `assembleRelease` создаёт неподписанный APK, и он **не**
+попадает на сайт. Сгенерировать keystore один раз:
+
+```bash
+keytool -genkeypair -v -keystore family-budget-release.jks -alias family-budget \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+В GitHub Actions те же значения хранятся в секретах: `ANDROID_KEYSTORE_BASE64`
+(base64 от файла `.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`,
+`ANDROID_KEY_PASSWORD`. Получить base64 в Windows PowerShell:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes('family-budget-release.jks')) | Set-Clipboard
+```
 
 ## Деплой
 

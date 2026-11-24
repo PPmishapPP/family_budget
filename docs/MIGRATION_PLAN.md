@@ -256,8 +256,12 @@ wrapper и Android Gradle Plugin, чтобы не конфликтовать с�
       подтверждения удаления, русские форматы.
 - [ ] 3.7. Тесты: ViewModel/репозиторий (JUnit + MockK + Turbine), Compose
       UI-тесты на критические сценарии; ручной прогон на эмуляторе.
-- [ ] 3.8. Release: signing keystore (не в git), `assembleRelease`,
+- [x] 3.8. Release: signing keystore (не в git), `assembleRelease`,
       internal testing (APK/Play Internal).
+      Настроено 2026-11-24: подпись release через `ANDROID_KEYSTORE_*`,
+      `API_BASE_URL=https://mishapp.ru/`; APK собирается при `bootJar`/`bootRun`
+      и раздаётся сайтом по `/download/family-budget.apk`. Keystore создаётся
+      один раз вручную и хранится в секретах CI; Play Internal не используется.
 
 **Готово, когда:** Android-приложение проходит тот же чек-лист паритета, что web.
 
