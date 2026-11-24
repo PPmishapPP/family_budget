@@ -94,15 +94,38 @@ Android-секреты обязательны: workflow **Deploy** отдель�
 
 Затем запустите workflow **Deploy** (`workflow_dispatch`) для нужной ветки.
 
-### Вариант B. Локально
+### Вариант B. Локально (Windows, с APK)
+
+Проверено 2026-11-24. Нужны JDK 25 (`~/.jdks/axiomjdk-25*`), JDK 21
+(`~/.jdks/openjdk-21*`) и Android SDK (`ANDROID_HOME`). Пути подставьте свои.
 
 ```powershell
 # из корня проекта, Windows PowerShell
+$env:JAVA_HOME='C:\Users\<user>\.jdks\axiomjdk-25.0.2'
+$env:ANDROID_JAVA_HOME='C:\Users\<user>\.jdks\openjdk-21.0.2'
+$env:ANDROID_KEYSTORE_PATH='C:\Users\<user>\keys\family-budget-release.jks'
+$env:ANDROID_KEYSTORE_PASSWORD='<пароль>'
+$env:ANDROID_KEY_ALIAS='family-budget'
+$env:ANDROID_KEY_PASSWORD='<пароль>'
+
 cd web; npm ci; npm run build; cd ..
-./gradlew :bot:bootJar -PskipWebBuild -x test
-scp -C bot/build/libs/app.jar root@mishapp.ru:/opt/family-budget/incoming/app.jar
+.\gradlew.bat :bot:bootJar -PskipWebBuild -x test --console=plain
+
+scp -C bot\build\libs\app.jar root@mishapp.ru:/opt/family-budget/incoming/app.jar
 ssh root@mishapp.ru "family-budget-deploy /opt/family-budget/incoming/app.jar"
 ```
+
+Обязательно проверьте, что APK попал в jar: при отсутствии keystore сборка не
+падает, а молча кладёт в jar неподписанный/старый APK — тогда
+`/download/family-budget.apk` отдаёт 404.
+
+```powershell
+& "$env:JAVA_HOME\bin\jar.exe" tf bot\build\libs\app.jar | Select-String 'download/'
+# ожидаемо: BOOT-INF/classes/static/download/family-budget.apk
+```
+
+Первая сборка Android-модуля на чистой машине занимает ~9 минут (Gradle 9.6
+для `android/`, скачивание зависимостей); последующие — секунды.
 
 Скрипт `family-budget-deploy`:
 1. кладёт jar в `/opt/family-budget/releases/<дата>/`;

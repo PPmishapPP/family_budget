@@ -90,6 +90,15 @@ keytool -genkeypair -v -keystore family-budget-release.jks -alias family-budget 
 Сохраните файл и пароли в надёжном месте. **Потеря keystore = невозможность
 обновлять приложение** в Google Play и на устройстве без переустановки.
 
+> **Текущий прод-ключ.** Первый опубликованный на `mishapp.ru` APK (деплой
+> 2026-11-24) подписан ключом, созданным в этот день, потому что ранее
+> release-keystore в проекте отсутствовал. Файл лежит вне репозитория:
+> `%USERPROFILE%\keys\family-budget-release.jks`, alias `family-budget`,
+> SHA-256 сертификата `ed56cf8a…44f333`. Данные и команда сборки записаны в
+> `SIGNING-README.txt` рядом с keystore. Этот же файл нужно положить в GitHub
+> Secret `ANDROID_KEYSTORE_BASE64`, иначе CI соберёт APK с другой подписью и
+> обновление поверх установленного приложения не пройдёт.
+
 ### Локальный запуск подписанной сборки (PowerShell)
 
 ```powershell
